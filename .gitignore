@@ -1,0 +1,10 @@
+# Внутренние рабочие материалы — не для чужих глаз
+ROADMAP.md
+TASKS.md
+Base Detective — техническая роадмапа ядра.html
+
+# Node / сборка
+node_modules/
+dist/
+.env
+.env.*
