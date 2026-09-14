@@ -6,5 +6,18 @@ Base Detective — техническая роадмапа ядра.html
 # Node / сборка
 node_modules/
 dist/
+dist-ssr/
+*.local
 .env
 .env.*
+
+# Логи
+logs
+*.log
+npm-debug.log*
+
+# Редакторы / ОС
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
