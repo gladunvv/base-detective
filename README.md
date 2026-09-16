@@ -2,6 +2,8 @@
 
 Обучающая SQL-игра: детективные дела, которые решаются запросами к базе данных.
 
+Прод: https://base-detective-zeta.vercel.app
+
 ## Стек
 
 Vite + React + TypeScript + Tailwind, SQL-движок на sql.js в Web Worker.
@@ -12,6 +14,19 @@ Vite + React + TypeScript + Tailwind, SQL-движок на sql.js в Web Worker
 npm install
 npm run dev
 ```
+
+## Дела
+
+Дела лежат в `public/cases/NN.json` и грузятся по HTTP, минуя бандл.
+Формат описан Zod-схемой в `src/core/types.ts`.
+
+```bash
+npm run validate:cases
+```
+
+Проверяет каждое дело по схеме и выполняет его SQL в SQLite: `schema` + `seed`
+должны отработать, эталон каждого шага — вернуть непустой результат
+(и на `seed`, и на `shadow_seed`).
 
 ## Лицензия
 
