@@ -8,17 +8,11 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js'
 import { parseCase } from '../src/core/caseLoader.ts'
+import { openDb } from '../src/core/sqlite.ts'
 import type { Case } from '../src/core/types.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const casesDir = join(root, 'public', 'cases')
-
-function openDb(SQL: SqlJsStatic, schema: string, seed: string): Database {
-  const db = new SQL.Database()
-  db.run(schema)
-  if (seed.trim() !== '') db.run(seed)
-  return db
-}
 
 /** Возвращает список проблем; пустой список — дело в порядке. */
 function checkSolutions(db: Database, kase: Case, label: string): string[] {

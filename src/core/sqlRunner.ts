@@ -3,15 +3,9 @@
  * вешает вкладку без возможности что-то нажать, поэтому база живёт в воркере,
  * а здесь стоит таймаут и право этот воркер убить.
  */
+import type { RunOutcome, SqlResult } from './sqlite.ts'
 
-export type SqlValue = number | string | Uint8Array | null
-
-export type SqlResult = {
-  columns: string[]
-  rows: SqlValue[][]
-}
-
-export type RunOutcome = { ok: true; result: SqlResult } | { ok: false; error: string }
+export type { SqlValue, SqlResult, RunOutcome } from './sqlite.ts'
 
 export type WorkerRequest =
   | { id: number; type: 'init'; schema: string; seed: string }

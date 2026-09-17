@@ -28,6 +28,15 @@ npm run validate:cases
 должны отработать, эталон каждого шага — вернуть непустой результат
 (и на `seed`, и на `shadow_seed`).
 
+## Тесты
+
+```bash
+npm test
+```
+
+`core/checker.ts` — проверка ответа игрока: пять режимов (`resultset`, `shadow`,
+`require`/`forbid`, `schema`, `rowcount`), покрыты Vitest-тестами.
+
 ## Лицензия
 
 Код — MIT ([LICENSE](./LICENSE)), контент дел — CC BY-SA 4.0 ([LICENSE-CONTENT](./LICENSE-CONTENT)).

@@ -1,36 +1,23 @@
 import initSqlJs, { type Database } from 'sql.js'
 import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
+import { execLast, openDb } from '../core/sqlite.ts'
 import type { SqlResult, WorkerRequest, WorkerResponse } from '../core/sqlRunner.ts'
 
 const sqlJs = initSqlJs({ locateFile: () => wasmUrl })
 
 let db: Database | null = null
 
-function open(schema: string, seed: string, SQL: Awaited<typeof sqlJs>): Database {
-  const fresh = new SQL.Database()
-  fresh.run(schema)
-  if (seed.trim() !== '') fresh.run(seed)
-  return fresh
-}
-
-/** Запрос игрока может содержать несколько инструкций: показываем результат последней. */
-function lastResult(sql: string, database: Database): SqlResult {
-  const results = database.exec(sql)
-  const last = results.at(-1)
-  return last ? { columns: last.columns, rows: last.values } : { columns: [], rows: [] }
-}
-
 async function handle(request: WorkerRequest): Promise<SqlResult> {
   const SQL = await sqlJs
 
   if (request.type === 'init') {
     db?.close()
-    db = open(request.schema, request.seed, SQL)
+    db = openDb(SQL, request.schema, request.seed)
     return { columns: [], rows: [] }
   }
 
   if (!db) throw new Error('База не инициализирована')
-  return lastResult(request.sql, db)
+  return execLast(db, request.sql)
 }
 
 /**
