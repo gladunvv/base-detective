@@ -37,6 +37,12 @@ npm test
 `core/checker.ts` — проверка ответа игрока: пять режимов (`resultset`, `shadow`,
 `require`/`forbid`, `schema`, `rowcount`), покрыты Vitest-тестами.
 
+## Интерфейс
+
+Терминал (CodeMirror 6 + автодополнение по схеме дела), таблица результата,
+панель дела и подсказки — `src/ui/`. Пока показывает только одно дело (`00`),
+без списка и роутинга — это фаза 5.
+
 ## Лицензия
 
 Код — MIT ([LICENSE](./LICENSE)), контент дел — CC BY-SA 4.0 ([LICENSE-CONTENT](./LICENSE-CONTENT)).

@@ -8,5 +8,3 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
-
-void import('./consoleBridge.ts').then((module) => module.installConsoleBridge())

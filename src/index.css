@@ -1,1 +1,25 @@
 @import "tailwindcss";
+@import "@fontsource/pt-mono/400.css";
+@import "@fontsource/golos-text/400.css";
+@import "@fontsource/golos-text/600.css";
+
+/*
+ * Палитра и шрифты — из дизайн-документа. Шесть цветов, дальше только их оттенки,
+ * градиентов нет. --stamp используется только для штампов принято/отказано,
+ * больше нигде.
+ */
+@theme {
+  --color-ink: #1b1a17;
+  --color-folder: #c9bfa4;
+  --color-paper: #e8e2d0;
+  --color-screen: #2e3b34;
+  --color-glow: #e0a72c;
+  --color-stamp: #8c2f1e;
+
+  --font-mono: 'PT Mono', ui-monospace, Menlo, Consolas, monospace;
+  --font-sans: 'Golos Text', system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-ink);
+}
