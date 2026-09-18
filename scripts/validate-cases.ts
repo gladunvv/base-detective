@@ -73,12 +73,44 @@ function validate(SQL: SqlJsStatic, file: string): string[] {
   return problems
 }
 
+const MANIFEST_FILE = 'index.json'
+
+/**
+ * index.json перечисляет id для списка дел — статический хостинг не отдаёт
+ * листинг директории, так что список нельзя получить иначе. Он должен точно
+ * совпадать с тем, что реально лежит в public/cases: иначе список дел либо
+ * покажет несуществующее дело, либо молча спрячет существующее.
+ */
+function validateManifest(caseFiles: string[]): string[] {
+  const path = join(casesDir, MANIFEST_FILE)
+
+  let raw: unknown
+  try {
+    raw = JSON.parse(readFileSync(path, 'utf8'))
+  } catch (error) {
+    return [`не является корректным JSON — ${(error as Error).message}`]
+  }
+  if (!Array.isArray(raw) || !raw.every((id) => typeof id === 'string')) {
+    return ['ожидался массив строк']
+  }
+
+  const listed = new Set(raw)
+  const onDisk = new Set(caseFiles.map((f) => f.replace(/\.json$/, '')))
+  const missing = [...onDisk].filter((id) => !listed.has(id))
+  const dangling = [...listed].filter((id) => !onDisk.has(id))
+
+  const problems: string[] = []
+  if (missing.length > 0) problems.push(`дела есть на диске, но не в манифесте: ${missing.join(', ')}`)
+  if (dangling.length > 0) problems.push(`манифест ссылается на несуществующие дела: ${dangling.join(', ')}`)
+  return problems
+}
+
 const SQL = await initSqlJs({
   locateFile: (file: string) => join(root, 'node_modules', 'sql.js', 'dist', file),
 })
 
 const files = readdirSync(casesDir)
-  .filter((f) => f.endsWith('.json'))
+  .filter((f) => f.endsWith('.json') && f !== MANIFEST_FILE)
   .sort()
 
 if (files.length === 0) {
@@ -98,5 +130,15 @@ for (const file of files) {
   }
 }
 
-console.log(`\n${files.length - failed} из ${files.length} дел прошли проверку`)
+const manifestProblems = validateManifest(files)
+if (manifestProblems.length === 0) {
+  console.log(`  ok  ${MANIFEST_FILE}`)
+} else {
+  failed += 1
+  console.error(`FAIL  ${MANIFEST_FILE}`)
+  for (const problem of manifestProblems) console.error(`      ${problem}`)
+}
+
+const total = files.length + 1 // + index.json
+console.log(`\n${total - failed} из ${total} дел/файлов прошли проверку`)
 process.exit(failed === 0 ? 0 : 1)

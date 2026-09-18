@@ -54,3 +54,34 @@ export async function loadCase(id: string): Promise<Case> {
   }
   return parsed
 }
+
+/**
+ * Список id дел в порядке отображения. Отдельный файл, а не сканирование каталога:
+ * статический хостинг не отдаёт листинг директории. Специально не хранит заголовки —
+ * иначе название ещё не пройденного дела утекало бы в список одним запросом
+ * (дизайн-документ, §4: заголовок недоступного дела — спойлер).
+ */
+export async function loadCaseManifest(): Promise<string[]> {
+  const source = 'index.json'
+  let response: Response
+  try {
+    response = await fetch(`/cases/${source}`)
+  } catch (cause) {
+    throw new CaseLoadError(source, `не удалось загрузить файл (${String(cause)})`)
+  }
+  if (!response.ok) {
+    throw new CaseLoadError(source, `сервер ответил ${response.status}`)
+  }
+
+  let raw: unknown
+  try {
+    raw = await response.json()
+  } catch {
+    throw new CaseLoadError(source, 'файл не является корректным JSON')
+  }
+
+  if (!Array.isArray(raw) || !raw.every((id) => typeof id === 'string')) {
+    throw new CaseLoadError(source, 'ожидался массив строк')
+  }
+  return raw
+}

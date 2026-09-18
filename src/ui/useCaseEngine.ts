@@ -45,7 +45,7 @@ function makeFreshExecutor(schema: string, seed: string) {
   }
 }
 
-export function useCaseEngine(kase: Case) {
+export function useCaseEngine(kase: Case, options: { onFinished?: () => void } = {}) {
   // Инициализатор useState вызывается один раз — раннер создаётся ровно
   // один раз на дело, без чтения/записи ref во время рендера.
   const [runner] = useState(() => new SqlRunner({ schema: kase.db.schema, seed: kase.db.seed }))
@@ -110,6 +110,7 @@ export function useCaseEngine(kase: Case) {
     setAccepted(false)
     if (next >= kase.steps.length) {
       setFinished(true)
+      options.onFinished?.()
       return
     }
     setStepIndex(next)

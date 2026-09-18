@@ -7,8 +7,8 @@ import { useCaseEngine } from './useCaseEngine.ts'
  * Две зоны: слева бумага (папка дела), справа машина (монитор). На узком экране
  * монитор заменяется честным сообщением — писать SQL с телефона мучительно (§13).
  */
-export function CaseView({ kase }: { kase: Case }) {
-  const engine = useCaseEngine(kase)
+export function CaseView({ kase, onFinished }: { kase: Case; onFinished?: () => void }) {
+  const engine = useCaseEngine(kase, { onFinished })
 
   return (
     <div className="flex min-h-dvh flex-col md:h-dvh md:flex-row md:overflow-hidden">
