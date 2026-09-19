@@ -35,7 +35,9 @@ npm test
 ```
 
 `core/checker.ts` — проверка ответа игрока: пять режимов (`resultset`, `shadow`,
-`require`/`forbid`, `schema`, `rowcount`), покрыты Vitest-тестами.
+`require`/`forbid`, `schema`, `rowcount`). `core/errorDict.ts` — перевод сырых
+сообщений SQLite на человеческий язык; правила из `Step.errors` перекрывают
+общий словарь. Всё покрыто Vitest-тестами.
 
 ## Интерфейс
 

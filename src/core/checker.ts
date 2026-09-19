@@ -6,8 +6,9 @@
  * (второй запрос видел бы изменения первого), а для shadow смысл в том, чтобы
  * прогнать обоих ровно на одинаковых стартовых данных.
  */
+import { translateError } from './errorDict.ts'
 import type { RunOutcome, SqlResult, SqlValue } from './sqlite.ts'
-import type { Check, Step } from './types.ts'
+import type { Check, ErrorRule, Step } from './types.ts'
 
 export type CheckVerdict =
   | { verdict: 'accepted'; note?: string }
@@ -30,14 +31,14 @@ export async function checkAnswer(params: CheckParams): Promise<CheckVerdict> {
   const { step, playerSql, runOnMain, runOnShadow } = params
   const { check } = step
 
-  const main = await runBoth(check, playerSql, step.solution, runOnMain)
+  const main = await runBoth(check, playerSql, step.solution, step.errors, runOnMain)
   if (main.verdict !== 'accepted') return main
 
   if (check.shadow) {
     if (!runOnShadow) {
       throw new TypeError('check.shadow требует runOnShadow')
     }
-    const shadow = await runBoth(check, playerSql, step.solution, runOnShadow)
+    const shadow = await runBoth(check, playerSql, step.solution, step.errors, runOnShadow)
     if (shadow.verdict === 'error') return shadow
     if (shadow.verdict === 'rejected') {
       return {
@@ -56,10 +57,13 @@ async function runBoth(
   check: Check,
   playerSql: string,
   solutionSql: string,
+  stepErrors: ErrorRule[],
   run: FreshExecutor,
 ): Promise<CheckVerdict> {
   const player = await run(buildQuery(check, playerSql))
-  if (!player.ok) return { verdict: 'error', error: player.error }
+  // Ошибка игрока — единственная, которую переводим: она дойдёт до экрана.
+  // Ошибка эталона ниже — сигнал о поломке самого дела, её нарочно не переводим.
+  if (!player.ok) return { verdict: 'error', error: translateError(player.error, stepErrors) }
 
   const solution = await run(buildQuery(check, solutionSql))
   if (!solution.ok) {

@@ -120,10 +120,22 @@ describe('resultset', () => {
     expect(verdict).toEqual({ verdict: 'rejected', reason: 'результат запроса не совпадает с эталоном' })
   })
 
-  it('возвращает ошибку игрока как есть', async () => {
+  it('переводит ошибку игрока на человеческий язык (фаза 6, errorDict)', async () => {
     const step = makeStep({ solution: 'SELECT name FROM suspects', check: {} })
     const verdict = await checkAnswer({ step, playerSql: 'SELECT nam FROM suspects', runOnMain: runOnMain() })
-    expect(verdict).toEqual({ verdict: 'error', error: 'no such column: nam' })
+    expect(verdict.verdict).toBe('error')
+    expect((verdict as { error: string }).error).not.toBe('no such column: nam')
+    expect((verdict as { error: string }).error).toContain('nam')
+  })
+
+  it('правило errors конкретного шага перекрывает общий словарь и здесь', async () => {
+    const step = makeStep({
+      solution: 'SELECT name FROM suspects',
+      check: {},
+    })
+    step.errors.push({ match: 'no such column', say: 'Проверьте название колонки в задании.' })
+    const verdict = await checkAnswer({ step, playerSql: 'SELECT nam FROM suspects', runOnMain: runOnMain() })
+    expect(verdict).toEqual({ verdict: 'error', error: 'Проверьте название колонки в задании.' })
   })
 })
 

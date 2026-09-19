@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { checkAnswer, type CheckVerdict } from '../core/checker.ts'
+import { translateError } from '../core/errorDict.ts'
 import { SqlRunner } from '../core/sqlRunner.ts'
 import type { RunOutcome, SqlResult } from '../core/sqlite.ts'
 import type { Case, Step } from '../core/types.ts'
@@ -74,7 +75,7 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
 
     const live = await runner.exec(sql)
     if (!live.ok) {
-      setOutcome({ kind: 'error', message: live.error })
+      setOutcome({ kind: 'error', message: translateError(live.error, step.errors) })
       setBusy(false)
       return
     }
