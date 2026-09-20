@@ -30,8 +30,14 @@ export function ResultTable({ result }: { result: SqlResult }) {
   const bottomPad = (rowCount - lastVisible) * ROW_HEIGHT
 
   return (
+    // tabindex делает прокрутку доступной с клавиатуры: внутри только текст,
+    // фокусировать нечего, и без этого до нижних строк не добраться без мыши
+    // (axe: scrollable-region-focusable).
     <div
       onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+      tabIndex={0}
+      role="group"
+      aria-label="Результат запроса"
       className="max-h-80 overflow-auto rounded border border-glow/30"
     >
       <table className="w-full border-collapse font-mono text-sm text-glow">
@@ -66,7 +72,7 @@ export function ResultTable({ result }: { result: SqlResult }) {
           )}
         </tbody>
       </table>
-      <p className="border-t border-glow/30 px-2 py-1 font-mono text-xs text-glow/70">
+      <p className="border-t border-glow/40 px-2 py-1 font-mono text-xs text-glow/90">
         {rowCount} {rowCount === 1 ? 'строка' : 'строк'}
       </p>
     </div>

@@ -3,9 +3,15 @@ import { Navigate } from 'react-router'
 import { CaseLoadError, loadCase } from '../core/caseLoader.ts'
 import type { ProgressStore } from '../core/storage.ts'
 import type { Case } from '../core/types.ts'
+import { analytics } from './analytics.ts'
 import { CaseView } from './CaseView.tsx'
+import { NotFoundPage } from './NotFoundPage.tsx'
 
-type LoadState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; kase: Case }
+type LoadState =
+  | { status: 'loading' }
+  | { status: 'missing' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; kase: Case }
 
 /**
  * `id` — снаружи (см. `CaseRoute` в App.tsx), с `key={id}`: при переходе между
@@ -17,8 +23,15 @@ export function CasePage({ id, storage }: { id: string; storage: ProgressStore }
 
   useEffect(() => {
     loadCase(id)
-      .then((kase) => setState({ status: 'ready', kase }))
+      .then((kase) => {
+        setState({ status: 'ready', kase })
+        analytics.caseOpened(kase.id)
+      })
       .catch((error: unknown) => {
+        if (error instanceof CaseLoadError && error.notFound) {
+          setState({ status: 'missing' })
+          return
+        }
         const message = error instanceof CaseLoadError ? error.message : String(error)
         setState({ status: 'error', message })
       })
@@ -36,9 +49,15 @@ export function CasePage({ id, storage }: { id: string; storage: ProgressStore }
     )
   }
 
+  // Дела с таким номером нет — это 404, а не поломка. Сломанный файл (следующая
+  // ветка) показывает техническую причину: она нужна автору дела, не игроку.
+  if (state.status === 'missing') {
+    return <NotFoundPage />
+  }
+
   if (state.status === 'error') {
     return (
-      <main className="flex min-h-dvh items-center justify-center bg-ink p-6 font-sans text-stamp">
+      <main className="flex min-h-dvh items-center justify-center bg-ink p-6 font-sans text-paper">
         {state.message}
       </main>
     )

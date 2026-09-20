@@ -7,6 +7,8 @@
  * Палитра и шрифты — из дизайн-документа. Шесть цветов, дальше только их оттенки,
  * градиентов нет. --stamp используется только для штампов принято/отказано,
  * больше нигде.
+ *
+ * Контраст всех пар проверяется скриптом: npm run check:contrast.
  */
 @theme {
   --color-ink: #1b1a17;
@@ -22,4 +24,36 @@
 
 body {
   background: var(--color-ink);
+}
+
+/*
+ * Фокус виден на любом фоне. Одного цвета не хватает: янтарный теряется на бумаге,
+ * тёмный — на тёмном. Поэтому кольцо двойное — тёмное поверх светлого; на светлых
+ * поверхностях читается внутреннее, на тёмных — внешнее.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-paper);
+}
+
+/*
+ * Движения в MVP почти нет (по дизайн-документу их всего два, и оба отложены),
+ * но правило стоит заранее: оно гасит и то, что придёт с библиотеками — например,
+ * мигающий курсор CodeMirror, который при длинной работе утомляет.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .cm-cursor,
+  .cm-dropCursor {
+    animation: none !important;
+  }
 }

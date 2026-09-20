@@ -50,7 +50,13 @@ export function CaseListPage({ storage }: { storage: ProgressStore }) {
         </button>
       </header>
 
-      {manifestError && <p className="font-mono text-sm text-stamp">{manifestError}</p>}
+      {manifestError && <p className="font-mono text-sm text-paper">{manifestError}</p>}
+
+      {ids !== null && ids.length === 0 && (
+        <p className="max-w-[46ch] font-sans text-sm text-folder">
+          В архиве пока пусто — ни одного дела. Загляните позже.
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
         {ids?.map((id) => (

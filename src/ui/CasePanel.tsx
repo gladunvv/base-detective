@@ -91,7 +91,7 @@ function Stamp({ kind, text }: { kind: 'accepted' | 'rejected'; text?: string })
       >
         {label}
       </p>
-      {text && <p className="font-mono text-sm text-stamp">{text}</p>}
+      {text && <p className="font-mono text-sm text-ink">{text}</p>}
     </div>
   )
 }

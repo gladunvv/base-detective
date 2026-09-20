@@ -4,6 +4,7 @@ import { translateError } from '../core/errorDict.ts'
 import { SqlRunner } from '../core/sqlRunner.ts'
 import type { RunOutcome, SqlResult } from '../core/sqlite.ts'
 import type { Case, Step } from '../core/types.ts'
+import { analytics } from './analytics.ts'
 import { fetchSchemaInfo, type SchemaInfo } from './schemaInfo.ts'
 
 export type Outcome =
@@ -76,6 +77,7 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
     const live = await runner.exec(sql)
     if (!live.ok) {
       setOutcome({ kind: 'error', message: translateError(live.error, step.errors) })
+      analytics.queryFailed(kase.id, step.id)
       setBusy(false)
       return
     }
@@ -94,6 +96,9 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
 
     setOutcome({ kind: 'result', result: live.result, verdict })
     setAccepted(verdict.verdict === 'accepted')
+    if (verdict.verdict === 'accepted') {
+      analytics.stepSolved(kase.id, step.id, stepIndex + 1)
+    }
     setBusy(false)
   }
 
@@ -111,6 +116,7 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
     setAccepted(false)
     if (next >= kase.steps.length) {
       setFinished(true)
+      analytics.caseFinished(kase.id)
       options.onFinished?.()
       return
     }
@@ -124,13 +130,16 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
 
   function revealHint(): void {
     if (!step) return
-    setHints((prev) => {
-      const current = prev[step.id] ?? 0
-      if (current >= step.hints.length) return prev
-      const next = { ...prev, [step.id]: current + 1 }
-      saveHints(kase.id, next)
-      return next
-    })
+    // Считаем и пишем снаружи updater'а: React может вызвать его дважды
+    // (StrictMode), а событие аналитики и запись в localStorage — побочные
+    // эффекты, которые от этого задвоились бы.
+    const current = hints[step.id] ?? 0
+    if (current >= step.hints.length) return
+
+    const next = { ...hints, [step.id]: current + 1 }
+    setHints(next)
+    saveHints(kase.id, next)
+    analytics.hintRevealed(kase.id, step.id, current + 1)
   }
 
   return {

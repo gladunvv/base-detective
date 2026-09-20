@@ -1,8 +1,15 @@
 import { sql, SQLite } from '@codemirror/lang-sql'
+import { Prec } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
 import { useEffect, useRef } from 'react'
 import type { SchemaInfo } from './schemaInfo.ts'
+
+/** На macOS сочетание пишется через ⌘, на остальных — Ctrl: подпись должна не врать. */
+const RUN_SHORTCUT =
+  typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+    ? '\u2318\u21a9'
+    : 'Ctrl+Enter'
 
 type TerminalProps = {
   value: string
@@ -37,19 +44,29 @@ export function Terminal({ value, onChange, onRun, schema, disabled }: TerminalP
       parent: hostRef.current,
       extensions: [
         basicSetup,
-        keymap.of([
-          {
-            key: 'Mod-Enter',
-            run: () => {
-              onRunRef.current()
-              return true
-            },
-          },
-        ]),
+        // Prec.highest обязателен: defaultKeymap внутри basicSetup сам держит
+        // Mod-Enter (вставка пустой строки) и без повышения приоритета
+        // перехватывает выполнение запроса.
+        // Два биндинга, потому что Mod — это Cmd на macOS и Ctrl на остальных,
+        // а Ctrl+Enter должен работать везде: игрок приходит с чужой шпаргалкой.
+        Prec.highest(
+          keymap.of(
+            (['Mod-Enter', 'Ctrl-Enter'] as const).map((key) => ({
+              key,
+              run: () => {
+                onRunRef.current()
+                return true
+              },
+            })),
+          ),
+        ),
         sql({ dialect: SQLite, schema }),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) onChangeRef.current(update.state.doc.toString())
         }),
+        // Без имени скринридер объявляет поле просто «текстовое поле» (axe:
+        // aria-input-field-name). CodeMirror ставит role=textbox сам, имя — за нами.
+        EditorView.contentAttributes.of({ 'aria-label': 'Поле ввода SQL-запроса' }),
         EditorView.theme({
           '&': { fontSize: '14px', height: '100%' },
           '.cm-content': { fontFamily: 'var(--font-mono)' },
@@ -86,7 +103,7 @@ export function Terminal({ value, onChange, onRun, schema, disabled }: TerminalP
         disabled={disabled}
         className="self-start rounded bg-glow px-3 py-1 font-sans text-sm font-semibold text-ink disabled:opacity-50"
       >
-        Выполнить (Ctrl+Enter)
+        Выполнить ({RUN_SHORTCUT})
       </button>
     </div>
   )

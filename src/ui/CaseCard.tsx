@@ -16,7 +16,7 @@ export function CaseCard({ id, title, unlocked, completed }: CaseCardProps) {
   if (!unlocked) {
     return (
       <div
-        className="flex aspect-4/3 flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-folder/40 font-mono text-folder/50"
+        className="flex aspect-4/3 flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-folder/60 font-mono text-folder/70"
         aria-label={`Дело № ${id}, недоступно`}
       >
         <span className="text-lg font-bold">№ {id}</span>

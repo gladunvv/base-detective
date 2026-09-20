@@ -3,11 +3,14 @@ import { caseSchema, type Case } from './types.ts'
 
 export class CaseLoadError extends Error {
   source: string
+  /** Дела с таким номером не существует — это 404, а не поломка файла. */
+  notFound: boolean
 
-  constructor(source: string, message: string) {
+  constructor(source: string, message: string, notFound = false) {
     super(`Дело ${source}: ${message}`)
     this.name = 'CaseLoadError'
     this.source = source
+    this.notFound = notFound
   }
 }
 
@@ -38,7 +41,7 @@ export async function loadCase(id: string): Promise<Case> {
     throw new CaseLoadError(source, `не удалось загрузить файл (${String(cause)})`)
   }
   if (!response.ok) {
-    throw new CaseLoadError(source, `сервер ответил ${response.status}`)
+    throw new CaseLoadError(source, `сервер ответил ${response.status}`, response.status === 404)
   }
 
   let raw: unknown
