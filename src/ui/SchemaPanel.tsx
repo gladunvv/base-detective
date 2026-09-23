@@ -11,18 +11,18 @@ export function SchemaPanel({ schema }: { schema: SchemaInfo }) {
   const tables = Object.entries(schema)
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="contents">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="self-start rounded border border-folder/60 px-2 py-1 font-sans text-sm text-folder"
+        className="min-w-36 self-start rounded border border-folder/60 px-2 py-1 text-center font-sans text-sm text-folder"
         aria-expanded={open}
       >
-        Схема базы
+        {open ? 'Скрыть таблицы' : 'Показать таблицы'}
       </button>
       {open && (
-        <div className="flex flex-col gap-2 rounded border border-glow/30 bg-screen p-2 font-mono text-xs text-glow">
-          {tables.length === 0 && <p>Схема ещё загружается…</p>}
+        <div className="order-last flex basis-full flex-col gap-2 rounded border border-glow/30 bg-screen p-2 font-mono text-xs text-glow">
+          {tables.length === 0 && <p>Таблицы ещё загружаются…</p>}
           {tables.map(([table, columns]) => (
             <div key={table}>
               <span className="font-bold">{table}</span>

@@ -8,19 +8,19 @@ export function Monitor({ engine }: { engine: ReturnType<typeof useCaseEngine> }
   const { sql, setSql, run, busy, outcome, schema, resetDatabase, step } = engine
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-y-auto bg-ink p-6">
+    <div className="flex h-full min-w-0 flex-1 flex-col gap-3 overflow-y-auto bg-ink p-6">
       <div className="rounded border border-folder/40 bg-screen/40 p-3">
         <Terminal value={sql} onChange={setSql} onRun={() => void run()} schema={schema} disabled={busy || !step} />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-start gap-2">
         <SchemaPanel schema={schema} />
         <button
           type="button"
           onClick={() => void resetDatabase()}
           className="self-start rounded border border-folder/60 px-2 py-1 font-sans text-sm text-folder"
         >
-          Сбросить базу
+          Вернуть данные как были
         </button>
       </div>
 

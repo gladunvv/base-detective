@@ -64,6 +64,7 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
   const step: Step | undefined = kase.steps[stepIndex]
 
   useEffect(() => {
+    runner.reopen()
     void fetchSchemaInfo((s) => runner.exec(s)).then(setSchema)
     return () => runner.dispose()
   }, [runner])

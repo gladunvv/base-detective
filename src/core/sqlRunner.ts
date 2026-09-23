@@ -61,6 +61,11 @@ export class SqlRunner {
     return this.#enqueue(async () => (await this.#initIfNeeded()) ?? { ok: true, result: EMPTY_RESULT })
   }
 
+  /** Снимает `dispose()`: React StrictMode в dev гоняет эффект «монтирование → очистка → монтирование» на одном экземпляре. */
+  reopen(): void {
+    this.#disposed = false
+  }
+
   /** Воркер и база живут ровно столько, сколько открыто дело. */
   dispose(): void {
     this.#disposed = true

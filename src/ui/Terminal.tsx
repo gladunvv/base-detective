@@ -95,7 +95,7 @@ export function Terminal({ value, onChange, onRun, schema, disabled }: TerminalP
       <div
         ref={hostRef}
         aria-disabled={disabled}
-        className="h-40 rounded border border-glow/30 bg-screen text-glow aria-disabled:opacity-50"
+        className="h-64 min-h-32 resize-y overflow-hidden rounded border border-glow/30 bg-screen text-glow aria-disabled:opacity-50"
       />
       <button
         type="button"
