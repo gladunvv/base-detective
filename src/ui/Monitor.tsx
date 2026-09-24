@@ -5,12 +5,20 @@ import type { useCaseEngine } from './useCaseEngine.ts'
 
 /** Правая колонка — машина: ввод запроса и результат, ничего третьего. */
 export function Monitor({ engine }: { engine: ReturnType<typeof useCaseEngine> }) {
-  const { sql, setSql, run, busy, outcome, schema, resetDatabase, step } = engine
+  const { sql, setSql, run, submit, busy, rejected, accepted, outcome, schema, resetDatabase, step } = engine
 
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-3 overflow-y-auto bg-ink p-6">
       <div className="rounded border border-folder/40 bg-screen/40 p-3">
-        <Terminal value={sql} onChange={setSql} onRun={() => void run()} schema={schema} disabled={busy || !step} />
+        <Terminal
+          value={sql}
+          onChange={setSql}
+          onRun={() => void run()}
+          onSubmit={() => void submit()}
+          canSubmit={!accepted && sql.trim() !== ''}
+          schema={schema}
+          disabled={busy || rejected || !step}
+        />
       </div>
 
       <div className="flex flex-wrap items-start gap-2">

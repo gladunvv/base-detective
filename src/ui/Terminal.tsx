@@ -1,8 +1,8 @@
 import { sql, SQLite } from '@codemirror/lang-sql'
-import { Prec } from '@codemirror/state'
+import { Compartment, Prec } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { SchemaInfo } from './schemaInfo.ts'
 
 /** На macOS сочетание пишется через ⌘, на остальных — Ctrl: подпись должна не врать. */
@@ -15,6 +15,8 @@ type TerminalProps = {
   value: string
   onChange: (value: string) => void
   onRun: () => void
+  onSubmit: () => void
+  canSubmit: boolean
   schema: SchemaInfo
   disabled: boolean
 }
@@ -23,12 +25,13 @@ type TerminalProps = {
  * Тонкая обёртка над CodeMirror 6: react-биндинги в задаче не просили,
  * а сам компонент — держатель `EditorView`, не более полусотни строк.
  */
-export function Terminal({ value, onChange, onRun, schema, disabled }: TerminalProps) {
+export function Terminal({ value, onChange, onRun, onSubmit, canSubmit, schema, disabled }: TerminalProps) {
   const hostRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
   // Замыкания в extensions ставятся один раз при монтировании — держим свежие
   // колбэки в ref (обновляется эффектом после каждого рендера, не во время него),
   // чтобы не пересоздавать редактор из-за смены пропсов.
+  const [editable] = useState(() => new Compartment())
   const onChangeRef = useRef(onChange)
   const onRunRef = useRef(onRun)
   useEffect(() => {
@@ -44,6 +47,7 @@ export function Terminal({ value, onChange, onRun, schema, disabled }: TerminalP
       parent: hostRef.current,
       extensions: [
         basicSetup,
+        editable.of(EditorView.editable.of(!disabled)),
         // Prec.highest обязателен: defaultKeymap внутри basicSetup сам держит
         // Mod-Enter (вставка пустой строки) и без повышения приоритета
         // перехватывает выполнение запроса.
@@ -80,6 +84,11 @@ export function Terminal({ value, onChange, onRun, schema, disabled }: TerminalP
     // пересоздавать редактор из-за неё не нужно.
   }, [])
 
+  // Заблокированный редактор реально не принимает ввод, а не только выглядит серым.
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: editable.reconfigure(EditorView.editable.of(!disabled)) })
+  }, [disabled, editable])
+
   // Внешнее изменение value (переход к новому шагу) синхронизируется в редактор.
   useEffect(() => {
     const view = viewRef.current
@@ -97,14 +106,24 @@ export function Terminal({ value, onChange, onRun, schema, disabled }: TerminalP
         aria-disabled={disabled}
         className="h-64 min-h-32 resize-y overflow-hidden rounded border border-glow/30 bg-screen text-glow aria-disabled:opacity-50"
       />
-      <button
-        type="button"
-        onClick={onRun}
-        disabled={disabled}
-        className="self-start rounded bg-glow px-3 py-1 font-sans text-sm font-semibold text-ink disabled:opacity-50"
-      >
-        Выполнить ({RUN_SHORTCUT})
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onRun}
+          disabled={disabled}
+          className="rounded border border-glow px-3 py-1 font-sans text-sm font-semibold text-glow disabled:opacity-50"
+        >
+          Выполнить ({RUN_SHORTCUT})
+        </button>
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={disabled || !canSubmit}
+          className="rounded bg-glow px-3 py-1 font-sans text-sm font-semibold text-ink disabled:opacity-50"
+        >
+          Отправить ответ
+        </button>
+      </div>
     </div>
   )
 }

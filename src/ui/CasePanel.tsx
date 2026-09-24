@@ -14,7 +14,8 @@ type CasePanelProps = {
  * а не на монитор.
  */
 export function CasePanel({ kase, engine }: CasePanelProps) {
-  const { step, stepNumber, totalSteps, finished, outcome, accepted, hintsRevealed, revealHint, advance } = engine
+  const { step, stepNumber, totalSteps, finished, verdict, accepted, hintsRevealed, revealHint, advance, retry } =
+    engine
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto bg-folder p-6 text-ink">
@@ -47,23 +48,24 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
 
           <Hints hints={step.hints} revealed={hintsRevealed} onReveal={revealHint} />
 
-          {outcome?.kind === 'error' && <Stamp kind="rejected" text={outcome.message} />}
-          {outcome?.kind === 'result' && outcome.verdict.verdict === 'rejected' && (
-            <Stamp kind="rejected" text={outcome.verdict.reason} />
-          )}
-          {outcome?.kind === 'result' && outcome.verdict.verdict === 'error' && (
-            <Stamp kind="rejected" text={outcome.verdict.error} />
+          {verdict && verdict.verdict !== 'accepted' && (
+            <div className="flex flex-col gap-3">
+              <Stamp kind="rejected" text={verdict.verdict === 'rejected' ? verdict.reason : verdict.error} />
+              <button
+                type="button"
+                onClick={retry}
+                className="self-start rounded bg-ink px-3 py-1 font-sans text-sm text-paper"
+              >
+                Попробовать ещё раз
+              </button>
+            </div>
           )}
 
           {accepted && (
             <div className="flex flex-col gap-3">
               <Stamp
                 kind="accepted"
-                text={
-                  outcome?.kind === 'result' && outcome.verdict.verdict === 'accepted'
-                    ? outcome.verdict.note
-                    : undefined
-                }
+                text={verdict?.verdict === 'accepted' ? verdict.note : undefined}
               />
               {step.outro.trim() !== '' && <Markdown text={step.outro} className="font-sans text-sm leading-relaxed" />}
               <button

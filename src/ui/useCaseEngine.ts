@@ -10,7 +10,7 @@ import { fetchSchemaInfo, type SchemaInfo } from './schemaInfo.ts'
 export type Outcome =
   | { kind: 'error'; message: string }
   | { kind: 'empty' }
-  | { kind: 'result'; result: SqlResult; verdict: CheckVerdict }
+  | { kind: 'result'; result: SqlResult }
 
 type HintsState = Record<string, number>
 
@@ -57,11 +57,14 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
   const [sql, setSql] = useState('')
   const [outcome, setOutcome] = useState<Outcome | null>(null)
   const [busy, setBusy] = useState(false)
-  const [accepted, setAccepted] = useState(false)
+  const [verdict, setVerdict] = useState<CheckVerdict | null>(null)
   const [hints, setHints] = useState<HintsState>(() => loadHints(kase.id))
   const [finished, setFinished] = useState(false)
 
   const step: Step | undefined = kase.steps[stepIndex]
+  const accepted = verdict?.verdict === 'accepted'
+  // После отказа поле и кнопки заблокированы до «Попробовать ещё раз».
+  const rejected = verdict !== null && !accepted
 
   useEffect(() => {
     runner.reopen()
@@ -69,44 +72,50 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
     return () => runner.dispose()
   }, [runner])
 
+  /** Просто выполняет запрос — поиграть с данными. Ничего не проверяет. */
   async function run(): Promise<void> {
-    if (!step || busy) return
+    if (!step || busy || rejected) return
 
     setBusy(true)
-    setAccepted(false)
-
     const live = await runner.exec(sql)
     if (!live.ok) {
       setOutcome({ kind: 'error', message: translateError(live.error, step.errors) })
       analytics.queryFailed(kase.id, step.id)
-      setBusy(false)
-      return
-    }
-    if (live.result.rows.length === 0) {
+    } else if (live.result.rows.length === 0) {
       setOutcome({ kind: 'empty' })
-      setBusy(false)
-      return
+    } else {
+      setOutcome({ kind: 'result', result: live.result })
     }
+    setBusy(false)
+  }
 
+  /** Сдаёт текущий текст запроса на проверку. */
+  async function submit(): Promise<void> {
+    if (!step || busy || verdict || sql.trim() === '') return
+
+    setBusy(true)
     const runOnMain = makeFreshExecutor(kase.db.schema, kase.db.seed)
     const runOnShadow =
       step.check.shadow && kase.db.shadow_seed !== undefined
         ? makeFreshExecutor(kase.db.schema, kase.db.shadow_seed)
         : undefined
-    const verdict = await checkAnswer({ step, playerSql: sql, runOnMain, runOnShadow })
+    const result = await checkAnswer({ step, playerSql: sql, runOnMain, runOnShadow })
 
-    setOutcome({ kind: 'result', result: live.result, verdict })
-    setAccepted(verdict.verdict === 'accepted')
-    if (verdict.verdict === 'accepted') {
+    setVerdict(result)
+    if (result.verdict === 'accepted') {
       analytics.stepSolved(kase.id, step.id, stepIndex + 1)
     }
     setBusy(false)
   }
 
+  /** Снимает штамп «Отказано»; текст запроса и результат на мониторе остаются. */
+  function retry(): void {
+    if (rejected) setVerdict(null)
+  }
+
   async function resetDatabase(): Promise<void> {
     await runner.reset()
     setOutcome(null)
-    setAccepted(false)
   }
 
   function advance(): void {
@@ -114,7 +123,7 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
     const next = stepIndex + 1
     setSql('')
     setOutcome(null)
-    setAccepted(false)
+    setVerdict(null)
     if (next >= kase.steps.length) {
       setFinished(true)
       analytics.caseFinished(kase.id)
@@ -153,8 +162,12 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
     setSql,
     outcome,
     busy,
+    verdict,
     accepted,
+    rejected,
     run,
+    submit,
+    retry,
     resetDatabase,
     advance,
     hintsRevealed: step ? (hints[step.id] ?? 0) : 0,
