@@ -1,6 +1,8 @@
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { sql, SQLite } from '@codemirror/lang-sql'
 import { Compartment, Prec } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
+import { tags } from '@lezer/highlight'
 import { basicSetup } from 'codemirror'
 import { useEffect, useRef, useState } from 'react'
 import type { SchemaInfo } from './schemaInfo.ts'
@@ -10,6 +12,17 @@ const RUN_SHORTCUT =
   typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
     ? '\u2318\u21a9'
     : 'Ctrl+Enter'
+
+/**
+ * Стандартная светлая подсветка CodeMirror (фиолетовые ключевые слова) на тёмном
+ * мониторе не читается — цвета берём из палитры: ключевые слова светлее и жирнее
+ * основного янтарного текста, строки и числа — «папочный» беж, комментарии тише.
+ */
+const sqlHighlight = HighlightStyle.define([
+  { tag: [tags.keyword, tags.typeName, tags.bool, tags.null], color: 'var(--color-paper)', fontWeight: 'bold' },
+  { tag: [tags.string, tags.number], color: 'var(--color-folder)' },
+  { tag: tags.comment, color: 'var(--color-folder)', opacity: '0.85', fontStyle: 'italic' },
+])
 
 type TerminalProps = {
   value: string
@@ -47,6 +60,7 @@ export function Terminal({ value, onChange, onRun, onSubmit, canSubmit, schema, 
       parent: hostRef.current,
       extensions: [
         basicSetup,
+        syntaxHighlighting(sqlHighlight),
         editable.of(EditorView.editable.of(!disabled)),
         // Prec.highest обязателен: defaultKeymap внутри basicSetup сам держит
         // Mod-Enter (вставка пустой строки) и без повышения приоритета

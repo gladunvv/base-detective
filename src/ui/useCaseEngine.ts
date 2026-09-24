@@ -108,9 +108,13 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
     setBusy(false)
   }
 
-  /** Снимает штамп «Отказано»; текст запроса и результат на мониторе остаются. */
+  /** Снимает штамп «Отказано» и сворачивает подсказки шага; текст запроса и результат на мониторе остаются. */
   function retry(): void {
-    if (rejected) setVerdict(null)
+    if (!step || !rejected) return
+    setVerdict(null)
+    const next = { ...hints, [step.id]: 0 }
+    setHints(next)
+    saveHints(kase.id, next)
   }
 
   async function resetDatabase(): Promise<void> {
