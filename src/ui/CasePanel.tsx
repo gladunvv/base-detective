@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import type { Case } from '../core/types.ts'
 import { Hints } from './Hints.tsx'
 import { Markdown } from './markdown.tsx'
@@ -19,6 +20,10 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto bg-folder p-6 text-ink">
+      <Link to="/" className="self-start font-sans text-sm underline">
+        ← К списку дел
+      </Link>
+
       <header className="font-mono">
         <p className="text-sm">
           ДЕЛО № {kase.id} · шаг {Math.min(stepNumber, totalSteps)} из {totalSteps}
