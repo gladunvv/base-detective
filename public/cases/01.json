@@ -1,0 +1,83 @@
+{
+  "format_version": 1,
+  "id": "01",
+  "title": "Пробный выезд",
+  "topic": "LIKE, DISTINCT, ORDER BY, LIMIT",
+
+  "db": {
+    "schema": "CREATE TABLE suspects (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  job TEXT NOT NULL\n);\n\nCREATE TABLE sightings (\n  id INTEGER PRIMARY KEY,\n  suspect_id INTEGER NOT NULL REFERENCES suspects(id),\n  place TEXT NOT NULL,\n  minute INTEGER NOT NULL\n);",
+    "seed": "INSERT INTO suspects (id, name, job) VALUES\n  (1, 'Дина Орлова', 'консьерж'),\n  (2, 'Егор Прутов', 'водитель'),\n  (3, 'Зоя Крайнова', 'садовник'),\n  (4, 'Иван Сотов', 'водитель');\n\nINSERT INTO sightings (id, suspect_id, place, minute) VALUES\n  (1, 1, 'вестибюль', 10),\n  (2, 2, 'двор', 5),\n  (3, 3, 'оранжерея', 40),\n  (4, 4, 'гараж', 22),\n  (5, 2, 'ворота', 47);",
+    "shadow_seed": "INSERT INTO suspects (id, name, job) VALUES\n  (10, 'Клара Реут', 'дворецкий'),\n  (11, 'Марк Тихов', 'механик'),\n  (12, 'Нина Соль', 'садовник'),\n  (13, 'Олег Финн', 'механик');\n\nINSERT INTO sightings (id, suspect_id, place, minute) VALUES\n  (20, 10, 'холл', 8),\n  (21, 11, 'мастерская', 30),\n  (22, 12, 'теплица', 15),\n  (23, 13, 'гараж', 50),\n  (24, 11, 'двор', 12);",
+    "persist_between_steps": false
+  },
+
+  "intro": "Второе тестовое дело — проверяем, что в списке карточек может быть больше одной и что разблокировка идёт по порядку. Сюжета по-прежнему нет, но теория и примеры в каждом шаге — настоящие, не заглушки: так должен выглядеть контент дел, когда до него дойдёт очередь.",
+
+  "steps": [
+    {
+      "id": "s1",
+      "brief": "Профессия может быть записана по-разному. Найдите всех, чья профессия содержит слово «сад».",
+      "theory": "`LIKE` ищет текст по шаблону, а не по точному совпадению. Знак `%` заменяет любое количество любых символов — до, после или с обеих сторон искомого куска.\n\nОбщий вид: `WHERE колонка LIKE '%кусок текста%'`.\n\nНапример, чтобы найти всех, кто причастен к кухне, шаблон был бы `'%повар%'`:\n\n```sql\nSELECT name FROM suspects WHERE job LIKE '%повар%'\n```",
+      "solution": "SELECT name FROM suspects WHERE job LIKE '%сад%'",
+      "check": {
+        "mode": "resultset",
+        "ordered": false,
+        "shadow": true,
+        "require": ["LIKE"],
+        "forbid": [],
+        "table": null
+      },
+      "hints": [
+        "Точное сравнение через `=` тут не подойдёт — нужен поиск по кусочку текста.",
+        "Шаблон — `%сад%`, с процентами по обе стороны.",
+        "`SELECT name FROM suspects WHERE job LIKE '%сад%'`"
+      ],
+      "errors": [],
+      "outro": "Тот же `LIKE '%сад%'` нашёл бы и «садовника», и «помощника садовника» — то, что точное `=` не умеет."
+    },
+    {
+      "id": "s2",
+      "brief": "Выведите профессии, которые встречаются среди подозреваемых, без повторов.",
+      "theory": "Обычный `SELECT` покажет профессию в каждой строке, где она встретилась: если двое работают водителями, «водитель» встретится дважды. `DISTINCT` перед списком колонок убирает повторяющиеся строки результата.\n\nОбщий вид: `SELECT DISTINCT колонка FROM таблица`.\n\nНапример, чтобы получить список мест, где кого-то видели, без повторов:\n\n```sql\nSELECT DISTINCT place FROM sightings\n```",
+      "solution": "SELECT DISTINCT job FROM suspects",
+      "check": {
+        "mode": "resultset",
+        "ordered": false,
+        "shadow": true,
+        "require": ["DISTINCT"],
+        "forbid": [],
+        "table": null
+      },
+      "hints": [
+        "Без DISTINCT одна и та же профессия покажется столько раз, сколько раз встретилась.",
+        "Ключевое слово ставится сразу после SELECT, перед именем колонки.",
+        "`SELECT DISTINCT job FROM suspects`"
+      ],
+      "errors": [],
+      "outro": "DISTINCT сравнивает всю строку результата целиком — с несколькими колонками он убирает только полностью одинаковые пары, не более."
+    },
+    {
+      "id": "s3",
+      "brief": "Кого из подозреваемых видели последним по времени? Выведите его имя и место, где его видели.",
+      "theory": "`ORDER BY колонка DESC` сортирует строки от большего значения к меньшему — например, от позднего времени к раннему. `LIMIT 1` оставляет от результата только первую строку: так получают «самый поздний» или «самый большой» без ручного перебора.\n\nОбщий вид: `... ORDER BY колонка DESC LIMIT 1`.\n\nЕсли бы нужен был не последний, а первый визит, `DESC` заменили бы на `ASC`:\n\n```sql\nSELECT * FROM sightings ORDER BY minute ASC LIMIT 1\n```",
+      "solution": "SELECT s.name, si.place FROM sightings si JOIN suspects s ON s.id = si.suspect_id ORDER BY si.minute DESC LIMIT 1",
+      "check": {
+        "mode": "resultset",
+        "ordered": false,
+        "shadow": true,
+        "require": ["JOIN", "ORDER BY", "LIMIT"],
+        "forbid": [],
+        "table": null
+      },
+      "hints": [
+        "Имя лежит в одной таблице, место — в другой: понадобится JOIN, как в деле 00.",
+        "Сортировка по времени (`minute`) по убыванию, а дальше — только первая строка.",
+        "`SELECT s.name, si.place FROM sightings si JOIN suspects s ON s.id = si.suspect_id ORDER BY si.minute DESC LIMIT 1`"
+      ],
+      "errors": [],
+      "outro": "ORDER BY + LIMIT 1 — способ получить «самый первый/последний/большой/маленький» без агрегатных функций."
+    }
+  ],
+
+  "epilogue": "Заглушка эпилога — как и в деле 00, тут пока нет сюжета. Если вы дошли досюда, значит навигация между несколькими делами, разблокировка по порядку и новая тема каждого шага работают."
+}
