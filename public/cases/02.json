@@ -1,0 +1,83 @@
+{
+  "format_version": 1,
+  "id": "02",
+  "title": "Дело о пропавшем котёнке",
+  "topic": "WHERE с несколькими условиями (AND), JOIN",
+
+  "db": {
+    "schema": "CREATE TABLE pets (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  species TEXT NOT NULL,\n  color TEXT NOT NULL,\n  age INTEGER NOT NULL\n);\n\nCREATE TABLE trackers (\n  id INTEGER PRIMARY KEY,\n  pet_id INTEGER NOT NULL REFERENCES pets(id),\n  code TEXT NOT NULL\n);",
+    "seed": "INSERT INTO pets (id, name, species, color, age) VALUES\n  (1, 'Сима', 'кот', 'серый', 7),\n  (2, 'Муся', 'кот', 'серый', 3),\n  (3, 'Дымка', 'кот', 'серый', 5),\n  (4, 'Барсик', 'кот', 'рыжий', 7),\n  (5, 'Рекс', 'пёс', 'серый', 7),\n  (6, 'Соня', 'кот', 'чёрный', 7),\n  (7, 'Нюша', 'кролик', 'серый', 2),\n  (8, 'Патрик', 'попугай', 'зелёный', 4);\n\nINSERT INTO trackers (id, pet_id, code) VALUES\n  (1, 1, 'GT-2291'),\n  (2, 2, 'GT-0147'),\n  (3, 5, 'GT-5502'),\n  (4, 3, 'GT-3368'),\n  (5, 6, 'GT-9914');",
+    "shadow_seed": "INSERT INTO pets (id, name, species, color, age) VALUES\n  (10, 'Муррка', 'кот', 'серый', 7),\n  (11, 'Тихон', 'кот', 'серый', 2),\n  (12, 'Гром', 'пёс', 'серый', 7),\n  (13, 'Рыжик', 'кот', 'рыжий', 7),\n  (14, 'Сима', 'попугай', 'зелёный', 3);\n\nINSERT INTO trackers (id, pet_id, code) VALUES\n  (10, 10, 'GT-6650'),\n  (11, 12, 'GT-1183'),\n  (12, 14, 'GT-4027');",
+    "persist_between_steps": false
+  },
+
+  "intro": "Приют «Тёплый дом» ведёт базу своих питомцев и выдаёт каждому GPS-трекер — на случай побега. Три дня назад сбежал кот Сима; хозяйка его нашла, но бумажку с кодом трекера потеряла, а сотрудник, который его выдавал, в отпуске. Код есть в базе приюта — нужно найти нужную строку по тому, что хозяйка о Симе помнит.",
+
+  "steps": [
+    {
+      "id": "s1",
+      "brief": "Хозяйка помнит только две вещи: Сима — кот, и шерсть у него серая. Выведите имена всех животных приюта под это описание.",
+      "theory": "До сих пор `WHERE` проверял одно условие. Чтобы отфильтровать сразу по нескольким, их соединяют словом `AND` — строка должна подойти под каждое условие одновременно.\n\nОбщий вид: `WHERE условие1 AND условие2`.\n\nНапример, чтобы найти серых кроликов:\n\n```sql\nSELECT name FROM pets WHERE species = 'кролик' AND color = 'серый'\n```",
+      "solution": "SELECT name FROM pets WHERE species = 'кот' AND color = 'серый'",
+      "check": {
+        "mode": "resultset",
+        "ordered": false,
+        "shadow": true,
+        "require": ["AND"],
+        "forbid": [],
+        "table": null
+      },
+      "hints": [
+        "Нужны оба условия сразу, через AND.",
+        "Условия — порода (`species`) и окрас (`color`).",
+        "`SELECT name FROM pets WHERE species = 'кот' AND color = 'серый'`"
+      ],
+      "errors": [],
+      "outro": "Серых котов в приюте несколько — одной приметы мало, нужна ещё."
+    },
+    {
+      "id": "s2",
+      "brief": "Хозяйка вспомнила: Симе семь лет. Сузьте список до одного животного.",
+      "theory": "Третье условие добавляется тем же `AND` — цепочку можно продолжать сколько нужно, SQL не ограничивает их число.\n\nОбщий вид: `WHERE условие1 AND условие2 AND условие3`.\n\nНапример, если бы вдобавок к окрасу и возрасту нужна была ещё и порода:\n\n```sql\nSELECT name FROM pets WHERE species = 'попугай' AND color = 'зелёный' AND age = 4\n```",
+      "solution": "SELECT name FROM pets WHERE species = 'кот' AND color = 'серый' AND age = 7",
+      "check": {
+        "mode": "resultset",
+        "ordered": false,
+        "shadow": true,
+        "require": ["AND"],
+        "forbid": [],
+        "table": null
+      },
+      "hints": [
+        "Допишите ещё одно условие тем же способом, что и в прошлый раз.",
+        "Третье условие — возраст (`age`), AND можно повторять.",
+        "`SELECT name FROM pets WHERE species = 'кот' AND color = 'серый' AND age = 7`"
+      ],
+      "errors": [],
+      "outro": "Теперь подходит только один — Сима."
+    },
+    {
+      "id": "s3",
+      "brief": "Код трекера хранится не у самого животного, а в отдельной таблице `trackers`. Найдите код трекера, привязанного к Симе.",
+      "theory": "Трекер — отдельная сущность, не колонка в `pets`: у части животных его вообще нет, хранить его в той же строке было бы расточительно. Связь — `trackers.pet_id`, который указывает на `pets.id`, ровно как `visits.suspect_id` в деле 00.\n\nОбщий вид: `... JOIN другая_таблица ON общий_id`.\n\nНапример, чтобы узнать код трекера Муси:\n\n```sql\nSELECT t.code FROM pets p JOIN trackers t ON t.pet_id = p.id WHERE p.name = 'Муся'\n```",
+      "solution": "SELECT t.code FROM pets p JOIN trackers t ON t.pet_id = p.id WHERE p.name = 'Сима'",
+      "check": {
+        "mode": "resultset",
+        "ordered": false,
+        "shadow": true,
+        "require": ["JOIN"],
+        "forbid": [],
+        "table": null
+      },
+      "hints": [
+        "Нужны обе таблицы: имя — из pets, код — из trackers.",
+        "Соединяем по `trackers.pet_id = pets.id`, дальше — обычный WHERE по имени.",
+        "`SELECT t.code FROM pets p JOIN trackers t ON t.pet_id = p.id WHERE p.name = 'Сима'`"
+      ],
+      "errors": [],
+      "outro": "Код найден."
+    }
+  ],
+
+  "epilogue": "GT-2291. Приют поднял сигнал трекера — Сима обнаружился под соседским крыльцом, в двух дворах от дома. Жив, цел, явно собой доволен."
+}
