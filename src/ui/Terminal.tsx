@@ -78,7 +78,7 @@ export function Terminal({ value, onChange, onRun, onSubmit, canSubmit, schema, 
             })),
           ),
         ),
-        sql({ dialect: SQLite, schema }),
+        sql({ dialect: SQLite, schema, upperCaseKeywords: true }),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) onChangeRef.current(update.state.doc.toString())
         }),
