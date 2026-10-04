@@ -60,6 +60,7 @@ export function Terminal({ value, onChange, onRun, onSubmit, canSubmit, schema, 
       parent: hostRef.current,
       extensions: [
         basicSetup,
+        EditorView.lineWrapping,
         syntaxHighlighting(sqlHighlight),
         editable.of(EditorView.editable.of(!disabled)),
         // Prec.highest обязателен: defaultKeymap внутри basicSetup сам держит
