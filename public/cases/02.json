@@ -3,16 +3,13 @@
   "id": "02",
   "title": "Дело о пропавшем котёнке",
   "topic": "WHERE с несколькими условиями (AND), JOIN",
-
   "db": {
     "schema": "CREATE TABLE pets (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  species TEXT NOT NULL,\n  color TEXT NOT NULL,\n  age INTEGER NOT NULL\n);\n\nCREATE TABLE trackers (\n  id INTEGER PRIMARY KEY,\n  pet_id INTEGER NOT NULL REFERENCES pets(id),\n  code TEXT NOT NULL\n);",
     "seed": "INSERT INTO pets (id, name, species, color, age) VALUES\n  (1, 'Сима', 'кот', 'серый', 7),\n  (2, 'Муся', 'кот', 'серый', 3),\n  (3, 'Дымка', 'кот', 'серый', 5),\n  (4, 'Барсик', 'кот', 'рыжий', 7),\n  (5, 'Рекс', 'пёс', 'серый', 7),\n  (6, 'Соня', 'кот', 'чёрный', 7),\n  (7, 'Нюша', 'кролик', 'серый', 2),\n  (8, 'Патрик', 'попугай', 'зелёный', 4);\n\nINSERT INTO trackers (id, pet_id, code) VALUES\n  (1, 1, 'GT-2291'),\n  (2, 2, 'GT-0147'),\n  (3, 5, 'GT-5502'),\n  (4, 3, 'GT-3368'),\n  (5, 6, 'GT-9914');",
     "shadow_seed": "INSERT INTO pets (id, name, species, color, age) VALUES\n  (10, 'Муррка', 'кот', 'серый', 7),\n  (11, 'Тихон', 'кот', 'серый', 2),\n  (12, 'Гром', 'пёс', 'серый', 7),\n  (13, 'Рыжик', 'кот', 'рыжий', 7),\n  (14, 'Сима', 'попугай', 'зелёный', 3);\n\nINSERT INTO trackers (id, pet_id, code) VALUES\n  (10, 10, 'GT-6650'),\n  (11, 12, 'GT-1183'),\n  (12, 14, 'GT-4027');",
     "persist_between_steps": false
   },
-
   "intro": "Приют «Тёплый дом» ведёт базу своих питомцев и выдаёт каждому GPS-трекер — на случай побега. Три дня назад сбежал кот Сима; хозяйка его нашла, но бумажку с кодом трекера потеряла, а сотрудник, который его выдавал, в отпуске. Код есть в базе приюта — нужно найти нужную строку по тому, что хозяйка о Симе помнит.",
-
   "steps": [
     {
       "id": "s1",
@@ -23,7 +20,9 @@
         "mode": "resultset",
         "ordered": false,
         "shadow": true,
-        "require": ["AND"],
+        "require": [
+          "AND"
+        ],
         "forbid": [],
         "table": null
       },
@@ -33,7 +32,8 @@
         "`SELECT name FROM pets WHERE species = 'кот' AND color = 'серый'`"
       ],
       "errors": [],
-      "outro": "Серых котов в приюте несколько — одной приметы мало, нужна ещё."
+      "outro": "Серых котов в приюте несколько — одной приметы мало, нужна ещё.",
+      "image": "/cases/images/02/s1.svg"
     },
     {
       "id": "s2",
@@ -44,7 +44,9 @@
         "mode": "resultset",
         "ordered": false,
         "shadow": true,
-        "require": ["AND"],
+        "require": [
+          "AND"
+        ],
         "forbid": [],
         "table": null
       },
@@ -54,7 +56,8 @@
         "`SELECT name FROM pets WHERE species = 'кот' AND color = 'серый' AND age = 7`"
       ],
       "errors": [],
-      "outro": "Теперь подходит только один — Сима."
+      "outro": "Теперь подходит только один — Сима.",
+      "image": "/cases/images/02/s2.svg"
     },
     {
       "id": "s3",
@@ -65,7 +68,9 @@
         "mode": "resultset",
         "ordered": false,
         "shadow": true,
-        "require": ["JOIN"],
+        "require": [
+          "JOIN"
+        ],
         "forbid": [],
         "table": null
       },
@@ -75,9 +80,10 @@
         "`SELECT t.code FROM pets p JOIN trackers t ON t.pet_id = p.id WHERE p.name = 'Сима'`"
       ],
       "errors": [],
-      "outro": "Код найден."
+      "outro": "Код найден.",
+      "image": "/cases/images/02/s3.svg"
     }
   ],
-
-  "epilogue": "GT-2291. Приют поднял сигнал трекера — Сима обнаружился под соседским крыльцом, в двух дворах от дома. Жив, цел, явно собой доволен."
+  "epilogue": "GT-2291. Приют поднял сигнал трекера — Сима обнаружился под соседским крыльцом, в двух дворах от дома. Жив, цел, явно собой доволен.",
+  "cover_image": "/cases/images/02/cover.svg"
 }

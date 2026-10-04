@@ -1,0 +1,17 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#e8e2d0"/>
+  <rect x="10" y="10" width="380" height="280" fill="none" stroke="#1b1a17" stroke-width="2" stroke-dasharray="6 4"/>
+  <g fill="#1b1a17">
+    <path d="M95 110 L112 72 L138 108 Z"/>
+    <path d="M195 110 L178 72 L152 108 Z"/>
+    <circle cx="145" cy="150" r="55"/>
+    <path d="M262 110 L279 72 L305 108 Z"/>
+    <path d="M362 110 L345 72 L319 108 Z"/>
+    <circle cx="312" cy="150" r="55"/>
+  </g>
+  <circle cx="130" cy="146" r="5" fill="#e8e2d0"/>
+  <circle cx="160" cy="146" r="5" fill="#e8e2d0"/>
+  <circle cx="297" cy="146" r="5" fill="#e8e2d0"/>
+  <circle cx="327" cy="146" r="5" fill="#e8e2d0"/>
+  <text x="30" y="260" font-family="monospace" font-size="16" fill="#1b1a17">КТО ИЗ НИХ?</text>
+</svg>

@@ -3,7 +3,7 @@
  * схема и seed должны выполняться, эталон каждого шага — возвращать результат.
  * Запуск: npm run validate:cases
  */
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js'
@@ -13,6 +13,17 @@ import type { Case } from '../src/core/types.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const casesDir = join(root, 'public', 'cases')
+const publicDir = join(root, 'public')
+
+/** Ссылка на картинку — путь под public/; нерабочий путь был бы виден только вручную в браузере. */
+function checkImages(kase: Case): string[] {
+  const problems: string[] = []
+  const paths = [kase.cover_image, ...kase.steps.map((s) => s.image)].filter((p): p is string => p !== undefined)
+  for (const p of paths) {
+    if (!existsSync(join(publicDir, p))) problems.push(`картинка не найдена: ${p}`)
+  }
+  return problems
+}
 
 /** Возвращает список проблем; пустой список — дело в порядке. */
 function checkSolutions(db: Database, kase: Case, label: string): string[] {
@@ -56,6 +67,7 @@ function validate(SQL: SqlJsStatic, file: string): string[] {
   }
 
   const problems = checkSolutions(db, kase, 'seed')
+  problems.push(...checkImages(kase))
   db.close()
 
   if (kase.db.shadow_seed !== undefined) {

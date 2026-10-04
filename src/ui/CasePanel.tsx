@@ -73,6 +73,13 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
                 text={verdict?.verdict === 'accepted' ? verdict.note : undefined}
               />
               {step.outro.trim() !== '' && <Markdown text={step.outro} className="font-sans text-sm leading-relaxed" />}
+              {step.image && (
+                <img
+                  src={step.image}
+                  alt=""
+                  className="w-full max-w-sm animate-[reveal_1.2s_ease-out] rounded border border-ink/20"
+                />
+              )}
               <button
                 type="button"
                 onClick={advance}

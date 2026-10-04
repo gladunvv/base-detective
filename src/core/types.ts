@@ -46,6 +46,8 @@ export const stepSchema = z.object({
   hints: z.array(z.string()).default([]),
   errors: z.array(errorRuleSchema).default([]),
   outro: z.string().default(''),
+  /** Путь под public/ (например, "/cases/images/02/s1.svg"). Появляется вместе со штампом «Принято». */
+  image: z.string().optional(),
 })
 
 export const dbSchema = z.object({
@@ -70,6 +72,8 @@ export const caseSchema = z
     intro: z.string().default(''),
     steps: z.array(stepSchema).min(1),
     epilogue: z.string().default(''),
+    /** Путь под public/, обложка карточки в списке дел. Без неё карточка просто без картинки. */
+    cover_image: z.string().optional(),
   })
   .superRefine((c, ctx) => {
     const seen = new Set<string>()

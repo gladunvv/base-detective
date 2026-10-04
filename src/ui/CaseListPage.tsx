@@ -6,7 +6,7 @@ import { CaseCard } from './CaseCard.tsx'
 export function CaseListPage({ storage }: { storage: ProgressStore }) {
   const [ids, setIds] = useState<string[] | null>(null)
   const [manifestError, setManifestError] = useState<string | null>(null)
-  const [titles, setTitles] = useState<Record<string, string>>({})
+  const [cardInfo, setCardInfo] = useState<Record<string, { title: string; coverImage?: string }>>({})
   // localStorage не оповещает о своих изменениях — после сброса прогресса
   // перечитываем его нарочно, бампая эту переменную.
   const [refreshKey, setRefreshKey] = useState(0)
@@ -22,11 +22,13 @@ export function CaseListPage({ storage }: { storage: ProgressStore }) {
   useEffect(() => {
     if (!ids) return
     for (const id of ids) {
-      if (!storage.isUnlocked(id) || titles[id] !== undefined) continue
-      void loadCase(id).then((kase) => setTitles((prev) => ({ ...prev, [id]: kase.title })))
+      if (!storage.isUnlocked(id) || cardInfo[id] !== undefined) continue
+      void loadCase(id).then((kase) =>
+        setCardInfo((prev) => ({ ...prev, [id]: { title: kase.title, coverImage: kase.cover_image } })),
+      )
     }
-    // titles намеренно не в зависимостях: используется только чтобы не перезапрашивать
-    // уже известный заголовок, а не как повод перезапускать сам эффект.
+    // cardInfo намеренно не в зависимостях: используется только чтобы не перезапрашивать
+    // уже известные данные, а не как повод перезапускать сам эффект.
   }, [ids, refreshKey, storage])
 
   function handleReset(): void {
@@ -63,7 +65,8 @@ export function CaseListPage({ storage }: { storage: ProgressStore }) {
           <CaseCard
             key={id}
             id={id}
-            title={titles[id]}
+            title={cardInfo[id]?.title}
+            coverImage={cardInfo[id]?.coverImage}
             unlocked={storage.isUnlocked(id)}
             completed={progress.completed.includes(id)}
           />

@@ -3,16 +3,13 @@
   "id": "01",
   "title": "Пробный выезд",
   "topic": "LIKE, DISTINCT, ORDER BY, LIMIT",
-
   "db": {
     "schema": "CREATE TABLE suspects (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  job TEXT NOT NULL\n);\n\nCREATE TABLE sightings (\n  id INTEGER PRIMARY KEY,\n  suspect_id INTEGER NOT NULL REFERENCES suspects(id),\n  place TEXT NOT NULL,\n  minute INTEGER NOT NULL\n);",
     "seed": "INSERT INTO suspects (id, name, job) VALUES\n  (1, 'Дина Орлова', 'консьерж'),\n  (2, 'Егор Прутов', 'водитель'),\n  (3, 'Зоя Крайнова', 'садовник'),\n  (4, 'Иван Сотов', 'водитель');\n\nINSERT INTO sightings (id, suspect_id, place, minute) VALUES\n  (1, 1, 'вестибюль', 10),\n  (2, 2, 'двор', 5),\n  (3, 3, 'оранжерея', 40),\n  (4, 4, 'гараж', 22),\n  (5, 2, 'ворота', 47);",
     "shadow_seed": "INSERT INTO suspects (id, name, job) VALUES\n  (10, 'Клара Реут', 'дворецкий'),\n  (11, 'Марк Тихов', 'механик'),\n  (12, 'Нина Соль', 'садовник'),\n  (13, 'Олег Финн', 'механик');\n\nINSERT INTO sightings (id, suspect_id, place, minute) VALUES\n  (20, 10, 'холл', 8),\n  (21, 11, 'мастерская', 30),\n  (22, 12, 'теплица', 15),\n  (23, 13, 'гараж', 50),\n  (24, 11, 'двор', 12);",
     "persist_between_steps": false
   },
-
   "intro": "Второе тестовое дело — проверяем, что в списке карточек может быть больше одной и что разблокировка идёт по порядку. Сюжета по-прежнему нет, но теория и примеры в каждом шаге — настоящие, не заглушки: так должен выглядеть контент дел, когда до него дойдёт очередь.",
-
   "steps": [
     {
       "id": "s1",
@@ -23,7 +20,9 @@
         "mode": "resultset",
         "ordered": false,
         "shadow": true,
-        "require": ["LIKE"],
+        "require": [
+          "LIKE"
+        ],
         "forbid": [],
         "table": null
       },
@@ -33,7 +32,8 @@
         "`SELECT name FROM suspects WHERE job LIKE '%сад%'`"
       ],
       "errors": [],
-      "outro": "Тот же `LIKE '%сад%'` нашёл бы и «садовника», и «помощника садовника» — то, что точное `=` не умеет."
+      "outro": "Тот же `LIKE '%сад%'` нашёл бы и «садовника», и «помощника садовника» — то, что точное `=` не умеет.",
+      "image": "/cases/images/01/placeholder.svg"
     },
     {
       "id": "s2",
@@ -44,7 +44,9 @@
         "mode": "resultset",
         "ordered": false,
         "shadow": true,
-        "require": ["DISTINCT"],
+        "require": [
+          "DISTINCT"
+        ],
         "forbid": [],
         "table": null
       },
@@ -54,7 +56,8 @@
         "`SELECT DISTINCT job FROM suspects`"
       ],
       "errors": [],
-      "outro": "DISTINCT сравнивает всю строку результата целиком — с несколькими колонками он убирает только полностью одинаковые пары, не более."
+      "outro": "DISTINCT сравнивает всю строку результата целиком — с несколькими колонками он убирает только полностью одинаковые пары, не более.",
+      "image": "/cases/images/01/placeholder.svg"
     },
     {
       "id": "s3",
@@ -65,7 +68,11 @@
         "mode": "resultset",
         "ordered": false,
         "shadow": true,
-        "require": ["JOIN", "ORDER BY", "LIMIT"],
+        "require": [
+          "JOIN",
+          "ORDER BY",
+          "LIMIT"
+        ],
         "forbid": [],
         "table": null
       },
@@ -75,9 +82,10 @@
         "`SELECT s.name, si.place FROM sightings si JOIN suspects s ON s.id = si.suspect_id ORDER BY si.minute DESC LIMIT 1`"
       ],
       "errors": [],
-      "outro": "ORDER BY + LIMIT 1 — способ получить «самый первый/последний/большой/маленький» без агрегатных функций."
+      "outro": "ORDER BY + LIMIT 1 — способ получить «самый первый/последний/большой/маленький» без агрегатных функций.",
+      "image": "/cases/images/01/placeholder.svg"
     }
   ],
-
-  "epilogue": "Заглушка эпилога — как и в деле 00, тут пока нет сюжета. Если вы дошли досюда, значит навигация между несколькими делами, разблокировка по порядку и новая тема каждого шага работают."
+  "epilogue": "Заглушка эпилога — как и в деле 00, тут пока нет сюжета. Если вы дошли досюда, значит навигация между несколькими делами, разблокировка по порядку и новая тема каждого шага работают.",
+  "cover_image": "/cases/images/01/placeholder.svg"
 }

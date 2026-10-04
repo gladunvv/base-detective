@@ -3,16 +3,13 @@
   "id": "00",
   "title": "Проверка связи",
   "topic": "SELECT, WHERE, JOIN",
-
   "db": {
     "schema": "CREATE TABLE suspects (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  job TEXT NOT NULL\n);\n\nCREATE TABLE visits (\n  id INTEGER PRIMARY KEY,\n  suspect_id INTEGER NOT NULL REFERENCES suspects(id),\n  room TEXT NOT NULL,\n  hour INTEGER NOT NULL\n);",
     "seed": "INSERT INTO suspects (id, name, job) VALUES\n  (1, 'Анна Верес', 'садовник'),\n  (2, 'Борис Клем', 'повар'),\n  (3, 'Вера Долина', 'библиотекарь'),\n  (4, 'Глеб Марин', 'садовник');\n\nINSERT INTO visits (id, suspect_id, room, hour) VALUES\n  (1, 1, 'оранжерея', 21),\n  (2, 2, 'кухня', 19),\n  (3, 3, 'библиотека', 23),\n  (4, 4, 'оранжерея', 22),\n  (5, 1, 'кабинет', 23);",
     "shadow_seed": "INSERT INTO suspects (id, name, job) VALUES\n  (10, 'Илья Сотов', 'повар'),\n  (11, 'Ким Раух', 'садовник'),\n  (12, 'Лана Штерн', 'кучер');\n\nINSERT INTO visits (id, suspect_id, room, hour) VALUES\n  (20, 10, 'кухня', 18),\n  (21, 11, 'подвал', 22),\n  (22, 12, 'конюшня', 23),\n  (23, 11, 'кабинет', 20);",
     "persist_between_steps": false
   },
-
   "intro": "Заглушка. Тестовое дело для проверки движка — в нём нет сюжета, только две таблицы и три шага.",
-
   "steps": [
     {
       "id": "s1",
@@ -38,7 +35,8 @@
           "say": "Таблица называется `suspects`, во множественном числе."
         }
       ],
-      "outro": "Заглушка."
+      "outro": "Заглушка.",
+      "image": "/cases/images/00/placeholder.svg"
     },
     {
       "id": "s2",
@@ -49,7 +47,9 @@
         "mode": "resultset",
         "ordered": false,
         "shadow": true,
-        "require": ["WHERE"],
+        "require": [
+          "WHERE"
+        ],
         "forbid": [],
         "table": null
       },
@@ -59,7 +59,8 @@
         "`SELECT name FROM suspects WHERE job = 'садовник'`"
       ],
       "errors": [],
-      "outro": "Заглушка."
+      "outro": "Заглушка.",
+      "image": "/cases/images/00/placeholder.svg"
     },
     {
       "id": "s3",
@@ -70,7 +71,10 @@
         "mode": "resultset",
         "ordered": true,
         "shadow": true,
-        "require": ["JOIN", "ORDER BY"],
+        "require": [
+          "JOIN",
+          "ORDER BY"
+        ],
         "forbid": [],
         "table": null
       },
@@ -80,9 +84,10 @@
         "`SELECT s.name, v.room FROM visits v JOIN suspects s ON s.id = v.suspect_id WHERE v.hour > 21 ORDER BY v.hour, s.name`"
       ],
       "errors": [],
-      "outro": "Заглушка."
+      "outro": "Заглушка.",
+      "image": "/cases/images/00/placeholder.svg"
     }
   ],
-
-  "epilogue": "Заглушка эпилога. Если вы это видите — движок работает."
+  "epilogue": "Заглушка эпилога. Если вы это видите — движок работает.",
+  "cover_image": "/cases/images/00/placeholder.svg"
 }
