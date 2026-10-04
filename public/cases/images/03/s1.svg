@@ -1,0 +1,22 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#e8e2d0"/>
+  <rect x="10" y="10" width="380" height="280" fill="none" stroke="#1b1a17" stroke-width="2" stroke-dasharray="6 4"/>
+  <g fill="#1b1a17">
+    <ellipse cx="120" cy="210" rx="60" ry="40"/>
+    <path d="M106 175 C102 140 120 112 145 108 C138 122 135 132 142 139 C128 136 114 150 114 175 Z"/>
+    <circle cx="144" cy="110" r="10"/>
+  </g>
+  <path d="M154 110 L170 106 L158 118 Z" fill="#e0a72c"/>
+  <g fill="#e8e2d0" fill-opacity="0.35">
+    <ellipse cx="290" cy="210" rx="60" ry="40"/>
+    <path d="M276 175 C272 140 290 112 315 108 C308 122 305 132 312 139 C298 136 284 150 284 175 Z"/>
+    <circle cx="314" cy="110" r="10"/>
+  </g>
+  <g stroke="#1b1a17" stroke-width="2.5" fill="none">
+    <ellipse cx="290" cy="210" rx="60" ry="40"/>
+    <path d="M276 175 C272 140 290 112 315 108 C308 122 305 132 312 139 C298 136 284 150 284 175 Z"/>
+    <circle cx="314" cy="110" r="10"/>
+  </g>
+  <path d="M324 110 L340 106 L328 118 Z" fill="#e0a72c"/>
+  <text x="30" y="266" font-family="monospace" font-size="16" fill="#1b1a17">СЕРЫЙ? БЕЛО-СЕРЫЙ?</text>
+</svg>

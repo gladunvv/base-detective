@@ -1,0 +1,18 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#e8e2d0"/>
+  <rect x="10" y="10" width="380" height="280" fill="none" stroke="#1b1a17" stroke-width="2" stroke-dasharray="6 4"/>
+  <path d="M60 230 Q200 100 340 230" fill="none" stroke="#1b1a17" stroke-width="2" stroke-dasharray="4 5"/>
+  <g>
+    <path d="M100 160 C100 140 120 140 120 160 C120 178 100 196 100 196 C100 196 80 178 80 160 C80 140 100 140 100 160 Z" fill="#8c2f1e"/>
+    <circle cx="100" cy="158" r="7" fill="#e8e2d0"/>
+  </g>
+  <g>
+    <path d="M210 110 C210 90 230 90 230 110 C230 128 210 146 210 146 C210 146 190 128 190 110 C190 90 210 90 210 110 Z" fill="#8c2f1e"/>
+    <circle cx="210" cy="108" r="7" fill="#e8e2d0"/>
+  </g>
+  <g>
+    <path d="M320 170 C320 150 340 150 340 170 C340 188 320 206 320 206 C320 206 300 188 300 170 C300 150 320 150 320 170 Z" fill="#8c2f1e"/>
+    <circle cx="320" cy="168" r="7" fill="#e8e2d0"/>
+  </g>
+  <text x="30" y="266" font-family="monospace" font-size="16" fill="#1b1a17">ФОНТАН · БЕСЕДКА · ПИРС</text>
+</svg>
