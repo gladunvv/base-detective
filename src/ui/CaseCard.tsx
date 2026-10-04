@@ -30,17 +30,36 @@ export function CaseCard({ id, title, coverImage, unlocked, completed }: CaseCar
   return (
     <Link
       to={`/case/${id}`}
-      className="relative flex aspect-4/3 flex-col justify-between overflow-hidden rounded bg-folder p-3 text-ink outline-offset-2 hover:brightness-95"
+      className="group relative flex aspect-4/3 flex-col justify-between rounded p-3 text-ink outline-offset-2 transition-transform duration-300 hover:-translate-y-1"
     >
-      {coverImage && (
-        <img
-          src={coverImage}
-          alt=""
-          className={`absolute inset-0 h-full w-full object-cover transition-[filter] duration-700 ${
-            completed ? '' : 'grayscale-[.65] brightness-90'
-          }`}
-        />
-      )}
+      {/*
+       * Листы внутри папки. Лежат под обложкой и выезжают вверх сильнее, чем
+       * поднимается сама карточка, — поэтому на ховере выглядывают из-за неё.
+       * Тень для объёма здесь не годится: список лежит на почти чёрном ink,
+       * и чёрную полупрозрачную тень на нём не видно.
+       */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-4 top-0 h-2/3 translate-y-2 -rotate-2 rounded-sm bg-paper transition-transform duration-300 group-hover:-translate-y-4 group-focus-visible:-translate-y-4"
+      />
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-7 top-0 h-2/3 translate-y-2 rotate-3 rounded-sm bg-paper/80 transition-transform duration-300 group-hover:-translate-y-2.5 group-focus-visible:-translate-y-2.5"
+      />
+
+      {/* Лицевая сторона папки. Внутренняя тень снизу читается как толщина картона. */}
+      <span className="absolute inset-0 overflow-hidden rounded bg-folder shadow-[inset_0_-6px_0_--theme(--color-ink/0.18)]">
+        {coverImage && (
+          <img
+            src={coverImage}
+            alt=""
+            className={`h-full w-full object-cover transition-[filter] duration-700 ${
+              completed ? '' : 'grayscale-[.65] brightness-90'
+            }`}
+          />
+        )}
+      </span>
+
       <span className="relative w-fit rounded bg-folder/90 px-1 font-mono text-xs">ДЕЛО № {id}</span>
       <span className="relative w-fit rounded bg-folder/90 px-1 font-sans text-sm font-semibold">{title ?? '…'}</span>
       {completed && (

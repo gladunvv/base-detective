@@ -41,7 +41,8 @@ export function CaseListPage({ storage }: { storage: ProgressStore }) {
 
   return (
     <div className="min-h-dvh bg-ink p-6">
-      <header className="mb-6 flex items-center justify-between gap-4">
+      {/* Отступ с запасом: на ховере из папок выезжают листы и заходят выше её верхнего края. */}
+      <header className="mb-10 flex items-center justify-between gap-4">
         <h1 className="font-mono text-2xl font-bold text-paper">Base Detective</h1>
         <button
           type="button"
@@ -60,7 +61,7 @@ export function CaseListPage({ storage }: { storage: ProgressStore }) {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-5">
         {ids?.map((id) => (
           <CaseCard
             key={id}
