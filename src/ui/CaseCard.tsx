@@ -30,7 +30,7 @@ export function CaseCard({ id, title, coverImage, unlocked, completed }: CaseCar
   return (
     <Link
       to={`/case/${id}`}
-      className="group relative flex aspect-4/3 flex-col justify-between rounded p-3 text-ink outline-offset-2 transition-transform duration-300 hover:-translate-y-1"
+      className="group @container relative flex aspect-4/3 flex-col justify-between rounded p-3 text-ink outline-offset-2 transition-transform duration-300 hover:-translate-y-1"
     >
       {/*
        * Листы внутри папки. Лежат под обложкой и выезжают вверх сильнее, чем
@@ -63,7 +63,7 @@ export function CaseCard({ id, title, coverImage, unlocked, completed }: CaseCar
       <span className="relative w-fit rounded bg-folder/90 px-1 font-mono text-xs">ДЕЛО № {id}</span>
       <span className="relative w-fit rounded bg-folder/90 px-1 font-sans text-sm font-semibold">{title ?? '…'}</span>
       {completed && (
-        <span className="absolute top-2 right-2 -rotate-6 rounded border-2 border-stamp px-1 py-0.5 font-mono text-[10px] font-bold text-stamp">
+        <span className="absolute top-2 right-2 -rotate-6 rounded border-3 border-stamp px-1 py-0.5 text-[8cqw] font-sans font-extrabold stamp-ink text-stamp">
           ЗАКРЫТО
         </span>
       )}

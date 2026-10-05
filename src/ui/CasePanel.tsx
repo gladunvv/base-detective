@@ -100,7 +100,7 @@ function Stamp({ kind, text }: { kind: 'accepted' | 'rejected'; text?: string })
   return (
     <div className="flex flex-col items-start gap-1">
       <p
-        className="w-fit -rotate-3 border-4 border-stamp px-3 py-1 font-mono text-lg font-bold tracking-widest text-stamp"
+        className="w-fit -rotate-3 border-4 border-stamp px-3 py-1 font-sans text-lg font-extrabold tracking-widest text-stamp"
         role="status"
       >
         {label}

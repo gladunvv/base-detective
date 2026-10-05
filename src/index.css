@@ -2,6 +2,9 @@
 @import "@fontsource/pt-mono/400.css";
 @import "@fontsource/golos-text/400.css";
 @import "@fontsource/golos-text/600.css";
+/* 800 — только для штампов: у PT Mono в пакете есть лишь 400, и `font-bold`
+   на нём даёт синтетический жир, который выглядит размазанным, а не оттиснутым. */
+@import "@fontsource/golos-text/800.css";
 
 /*
  * Палитра и шрифты — из дизайн-документа. Шесть цветов, дальше только их оттенки,
@@ -29,6 +32,20 @@ body {
 /* Tailwind preflight ставит button { cursor: default } — курсор не отличает кнопку от текста. */
 button:not(:disabled) {
   cursor: pointer;
+}
+
+/*
+ * Оттиск штампа. Краска ложится неровно: маска из фрактального шума съедает
+ * её местами. Шум рисуется фильтром в data-URI — ни одного файла-картинки,
+ * и он не зависит от размера штампа.
+ *
+ * Без `mix-blend-mode: multiply`, хотя с ним оттиск выглядит достовернее:
+ * поверх тёмных участков обложки (чёрный силуэт кота в деле 02) умножение
+ * гасит кирпичный цвет почти в чёрный, и штамп перестаёт читаться.
+ */
+.stamp-ink {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='1.8' intercept='0.12'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  mask-mode: alpha;
 }
 
 /*
