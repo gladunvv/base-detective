@@ -61,7 +61,12 @@ export function CaseListPage({ storage }: { storage: ProgressStore }) {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-5">
+      {/*
+       * Колонки добавляются так, чтобы карточка нигде не падала ниже ~200px:
+       * на 125px (пять колонок с 768px) и на 159px (две на телефоне) длинный
+       * заголовок разворачивался на три строки и заезжал на штамп.
+       */}
+      <div className="grid grid-cols-1 gap-6 min-[480px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {ids?.map((id) => (
           <CaseCard
             key={id}
