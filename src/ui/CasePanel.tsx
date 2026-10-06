@@ -34,8 +34,15 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
       <Markdown text={kase.intro} className="font-sans text-sm leading-relaxed" />
 
       {finished ? (
-        <section className="flex flex-col gap-2 rounded bg-paper p-4">
+        <section className="flex flex-col gap-3 rounded bg-paper p-4">
           <Markdown text={kase.epilogue} className="font-sans text-sm leading-relaxed" />
+          {kase.epilogue_image && (
+            <img
+              src={kase.epilogue_image}
+              alt=""
+              className="w-full max-w-sm animate-[reveal_1.2s_ease-out] rounded border border-ink/20"
+            />
+          )}
         </section>
       ) : step ? (
         <section className="flex flex-col gap-4 rounded bg-paper p-4">

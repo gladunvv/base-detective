@@ -74,6 +74,8 @@ export const caseSchema = z
     epilogue: z.string().default(''),
     /** Путь под public/, обложка карточки в списке дел. Без неё карточка просто без картинки. */
     cover_image: z.string().optional(),
+    /** Путь под public/, финальный кадр дела. Показывается с эпилогом, после последнего шага. */
+    epilogue_image: z.string().optional(),
   })
   .superRefine((c, ctx) => {
     const seen = new Set<string>()

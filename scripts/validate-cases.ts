@@ -18,7 +18,9 @@ const publicDir = join(root, 'public')
 /** Ссылка на картинку — путь под public/; нерабочий путь был бы виден только вручную в браузере. */
 function checkImages(kase: Case): string[] {
   const problems: string[] = []
-  const paths = [kase.cover_image, ...kase.steps.map((s) => s.image)].filter((p): p is string => p !== undefined)
+  const paths = [kase.cover_image, kase.epilogue_image, ...kase.steps.map((s) => s.image)].filter(
+    (p): p is string => p !== undefined,
+  )
   for (const p of paths) {
     if (!existsSync(join(publicDir, p))) problems.push(`картинка не найдена: ${p}`)
   }
