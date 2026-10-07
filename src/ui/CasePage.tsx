@@ -40,7 +40,7 @@ export function CasePage({ id, storage }: { id: string; storage: ProgressStore }
   // Попытка зайти в дело раньше очереди — редирект в список, без объяснений
   // на этом экране: объяснение и так на месте, в виде перевязанной папки.
   if (!storage.isUnlocked(id)) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/archive" replace />
   }
 
   if (state.status === 'loading') {

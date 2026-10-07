@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes, useParams } from 'react-router'
 import { createStorage, type ProgressStore } from './core/storage.ts'
 import { CaseListPage } from './ui/CaseListPage.tsx'
 import { CasePage } from './ui/CasePage.tsx'
+import { LandingPage } from './ui/LandingPage.tsx'
 import { NotFoundPage } from './ui/NotFoundPage.tsx'
 
 /** `key={id}` пересоздаёт CasePage при переходе на другое дело — своё состояние загрузки на каждое. */
@@ -19,7 +20,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<CaseListPage storage={storage} />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/archive" element={<CaseListPage storage={storage} />} />
         <Route path="/case/:id" element={<CaseRoute storage={storage} />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

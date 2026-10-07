@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import { CaseLoadError, loadCase, loadCaseManifest } from '../core/caseLoader.ts'
 import type { ProgressStore } from '../core/storage.ts'
 import { CaseCard } from './CaseCard.tsx'
@@ -41,9 +42,13 @@ export function CaseListPage({ storage }: { storage: ProgressStore }) {
 
   return (
     <div className="min-h-dvh bg-ink p-6">
+      <Link to="/" className="font-sans text-sm text-folder underline">
+        ← На главную
+      </Link>
+
       {/* Отступ с запасом: на ховере из папок выезжают листы и заходят выше её верхнего края. */}
-      <header className="mb-10 flex items-center justify-between gap-4">
-        <h1 className="font-mono text-2xl font-bold text-paper">Base Detective</h1>
+      <header className="mt-4 mb-10 flex items-center justify-between gap-4">
+        <h1 className="font-mono text-2xl font-bold text-paper">Архив дел</h1>
         <button
           type="button"
           onClick={handleReset}

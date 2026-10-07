@@ -11,7 +11,7 @@ export function NotFoundPage() {
       <p className="max-w-[46ch] font-sans text-sm text-paper">
         Такой папки в архиве нет. Возможно, номер дела набран с ошибкой.
       </p>
-      <Link to="/" className="rounded border border-folder px-3 py-1 font-sans text-sm text-folder">
+      <Link to="/archive" className="rounded border border-folder px-3 py-1 font-sans text-sm text-folder">
         Вернуться к делам
       </Link>
     </main>

@@ -20,7 +20,7 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto bg-folder p-6 text-ink">
-      <Link to="/" className="self-start font-sans text-sm underline">
+      <Link to="/archive" className="self-start font-sans text-sm underline">
         ← К списку дел
       </Link>
 
