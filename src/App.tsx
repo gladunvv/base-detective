@@ -20,7 +20,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage storage={storage} />} />
         <Route path="/archive" element={<CaseListPage storage={storage} />} />
         <Route path="/case/:id" element={<CaseRoute storage={storage} />} />
         <Route path="*" element={<NotFoundPage />} />

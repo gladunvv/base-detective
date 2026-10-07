@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "validate:cases": "node scripts/validate-cases.ts",
+    "og:image": "node scripts/make-og-image.ts",
     "test": "vitest run",
     "check:contrast": "node scripts/check-contrast.ts"
   },

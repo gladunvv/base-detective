@@ -32,6 +32,8 @@ type Pair = {
 // Пары, которые реально встречаются в интерфейсе.
 const PAIRS: Pair[] = [
   { what: 'текст терминала и таблицы', fg: 'glow', bg: 'screen' },
+  { what: 'письмо деда на экране главной', fg: 'paper', bg: 'screen' },
+  { what: 'подпись и постскриптум в письме', fg: 'folder', bg: 'screen' },
   { what: 'ключевые слова SQL в терминале', fg: 'paper', bg: 'screen' },
   { what: 'строки и числа SQL в терминале', fg: 'folder', bg: 'screen' },
   { what: 'комментарии SQL в терминале', fg: ['folder', 0.85], bg: 'screen' },
