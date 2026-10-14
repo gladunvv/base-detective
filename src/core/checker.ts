@@ -108,28 +108,28 @@ function compareByMode(check: Check, expected: SqlResult, actual: SqlResult): Co
 // --- resultset ------------------------------------------------------------
 
 /**
- * Сравнение результата с нормализацией: пробелы и регистр в именах колонок роли
- * не играют, `NULL` и пустая строка считаются одним и тем же значением. Порядок
- * строк учитывается только при `ordered: true`; порядок колонок — всегда,
- * колонки в SQL — позиционные, а не именованные.
+ * Сравнение результата: сходиться должны число колонок и сами значения по
+ * позициям. `NULL` и пустая строка считаются одним и тем же. Порядок строк
+ * учитывается только при `ordered: true`; порядок колонок — всегда, колонки
+ * в SQL позиционные, а не именованные.
+ *
+ * Имена колонок не сверяются вовсе, и это осознанно. SQLite называет колонку
+ * по тексту выражения, поэтому `SELECT COUNT(*)` даёт имя `COUNT(*)`, а
+ * `SELECT COUNT(*) AS n` — имя `n`. Числа одинаковые, имена разные: сверка имён
+ * отклоняла бы верный ответ на каждом шаге с агрегатом, то есть на всём блоке
+ * COUNT/SUM/GROUP BY. Псевдоним — дело вкуса пишущего, а не часть ответа.
+ *
+ * Потеря от этого почти нулевая: выбранная не та колонка ловится значениями,
+ * перепутанный порядок — тоже, лишняя или недостающая — числом колонок.
  */
 export function compareResultSets(expected: SqlResult, actual: SqlResult, ordered: boolean): boolean {
-  if (!columnsEqual(expected.columns, actual.columns)) return false
+  if (expected.columns.length !== actual.columns.length) return false
   if (expected.rows.length !== actual.rows.length) return false
 
   if (ordered) {
     return expected.rows.every((row, i) => rowEquals(row, actual.rows[i]))
   }
   return multisetEquals(expected.rows, actual.rows)
-}
-
-function columnsEqual(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false
-  return a.every((name, i) => normalizeColumnName(name) === normalizeColumnName(b[i]))
-}
-
-function normalizeColumnName(name: string): string {
-  return name.trim().toLowerCase()
 }
 
 function rowEquals(a: SqlValue[], b: SqlValue[]): boolean {

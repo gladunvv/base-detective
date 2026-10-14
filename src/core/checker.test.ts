@@ -104,6 +104,56 @@ describe('resultset', () => {
     expect(verdict.verdict).toBe('accepted')
   })
 
+  it('псевдоним колонки не влияет на вердикт', async () => {
+    const step = makeStep({ solution: 'SELECT name FROM suspects', check: {} })
+    const verdict = await checkAnswer({
+      step,
+      playerSql: 'SELECT name AS кто FROM suspects',
+      runOnMain: runOnMain(),
+    })
+    expect(verdict.verdict).toBe('accepted')
+  })
+
+  // Ради этого случая сверка имён и убрана: SQLite назовёт колонку по тексту
+  // выражения, и `COUNT(*)` против `n` разошлись бы при одинаковом числе.
+  it('агрегат принимается и с псевдонимом, и без него', async () => {
+    const step = makeStep({ solution: 'SELECT COUNT(*) FROM suspects', check: {} })
+
+    const сПсевдонимом = await checkAnswer({
+      step,
+      playerSql: 'SELECT COUNT(*) AS n FROM suspects',
+      runOnMain: runOnMain(),
+    })
+    expect(сПсевдонимом.verdict).toBe('accepted')
+
+    const безПсевдонима = await checkAnswer({
+      step,
+      playerSql: 'SELECT COUNT(*) FROM suspects',
+      runOnMain: runOnMain(),
+    })
+    expect(безПсевдонима.verdict).toBe('accepted')
+  })
+
+  it('но неверный агрегат по-прежнему отклоняется', async () => {
+    const step = makeStep({ solution: 'SELECT COUNT(*) FROM suspects', check: {} })
+    const verdict = await checkAnswer({
+      step,
+      playerSql: "SELECT COUNT(*) AS n FROM suspects WHERE job = 'садовник'",
+      runOnMain: runOnMain(),
+    })
+    expect(verdict.verdict).toBe('rejected')
+  })
+
+  it('перепутанный порядок колонок ловится значениями, а не именами', async () => {
+    const step = makeStep({ solution: 'SELECT name, job FROM suspects', check: {} })
+    const verdict = await checkAnswer({
+      step,
+      playerSql: 'SELECT job, name FROM suspects',
+      runOnMain: runOnMain(),
+    })
+    expect(verdict.verdict).toBe('rejected')
+  })
+
   it('NULL и пустая строка считаются одним значением', async () => {
     const step = makeStep({ solution: "SELECT NULL AS job", check: {} })
     const verdict = await checkAnswer({ step, playerSql: "SELECT '' AS job", runOnMain: runOnMain() })
