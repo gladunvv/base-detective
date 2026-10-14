@@ -33,7 +33,10 @@
       ],
       "errors": [],
       "outro": "Серых котов в приюте несколько — одной приметы мало, нужна ещё.",
-      "image": "/cases/images/02/s1.jpg"
+      "image": "/cases/images/02/s1.jpg",
+      "teaches": [
+        "and"
+      ]
     },
     {
       "id": "s2",
@@ -57,7 +60,10 @@
       ],
       "errors": [],
       "outro": "Теперь подходит только один — Сима.",
-      "image": "/cases/images/02/s2.jpg"
+      "image": "/cases/images/02/s2.jpg",
+      "teaches": [
+        "and"
+      ]
     },
     {
       "id": "s3",
@@ -81,7 +87,10 @@
       ],
       "errors": [],
       "outro": "Код найден.",
-      "image": "/cases/images/02/s3.jpg"
+      "image": "/cases/images/02/s3.jpg",
+      "teaches": [
+        "join"
+      ]
     }
   ],
   "epilogue": "GT-2291. Приют поднял сигнал трекера — Сима обнаружился под соседским крыльцом, в двух дворах от дома. Жив, цел, явно собой доволен.",

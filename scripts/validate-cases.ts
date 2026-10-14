@@ -27,6 +27,40 @@ function checkImages(kase: Case): string[] {
   return problems
 }
 
+const CHEATSHEET_FILE = join(root, 'public', 'cheatsheet.json')
+
+/** Справочник конструкций: id → название. Шаги ссылаются на него через `teaches`. */
+function readCheatsheet(): Map<string, string> {
+  const raw: unknown = JSON.parse(readFileSync(CHEATSHEET_FILE, 'utf8'))
+  if (!Array.isArray(raw)) throw new Error('cheatsheet.json: ожидался массив записей')
+  const byId = new Map<string, string>()
+  for (const entry of raw as { id?: unknown; title?: unknown }[]) {
+    if (typeof entry.id !== 'string' || typeof entry.title !== 'string') {
+      throw new Error('cheatsheet.json: у записи должны быть строковые id и title')
+    }
+    if (byId.has(entry.id)) throw new Error(`cheatsheet.json: id "${entry.id}" встречается дважды`)
+    byId.set(entry.id, entry.title)
+  }
+  return byId
+}
+
+/**
+ * Шаг ссылается на конструкцию по имени, а не по номеру дела, — перенумерация
+ * такую связь не ломает. Но опечатку в id иначе не поймать: шпаргалка молча
+ * не откроет тему, и узнаем мы об этом от игрока.
+ */
+function checkTeaches(kase: Case, known: Map<string, string>): string[] {
+  const problems: string[] = []
+  for (const step of kase.steps) {
+    for (const id of step.teaches) {
+      if (!known.has(id)) problems.push(`шаг ${step.id}: в шпаргалке нет конструкции "${id}"`)
+    }
+  }
+  return problems
+}
+
+const cheatsheet = readCheatsheet()
+
 /** Возвращает список проблем; пустой список — дело в порядке. */
 function checkSolutions(db: Database, kase: Case, label: string): string[] {
   const problems: string[] = []
@@ -70,6 +104,7 @@ function validate(SQL: SqlJsStatic, file: string): string[] {
 
   const problems = checkSolutions(db, kase, 'seed')
   problems.push(...checkImages(kase))
+  problems.push(...checkTeaches(kase, cheatsheet))
   db.close()
 
   if (kase.db.shadow_seed !== undefined) {
@@ -142,6 +177,22 @@ for (const file of files) {
     console.error(`FAIL  ${file}`)
     for (const problem of problems) console.error(`      ${problem}`)
   }
+}
+
+// Обратная сторона: тема, которую никто не преподаёт, — дыра в курсе,
+// и заметить её иначе можно только вручную по карте.
+const taught = new Set<string>()
+for (const file of files) {
+  try {
+    const kase = parseCase(JSON.parse(readFileSync(join(casesDir, file), 'utf8')), file)
+    for (const step of kase.steps) for (const id of step.teaches) taught.add(id)
+  } catch {
+    // дело уже отчиталось о своей поломке выше
+  }
+}
+const orphans = [...cheatsheet.keys()].filter((id) => !taught.has(id))
+if (orphans.length > 0) {
+  console.log(`  ·   в шпаргалке есть, но пока нигде не преподаётся: ${orphans.join(', ')}`)
 }
 
 const manifestProblems = validateManifest(files)

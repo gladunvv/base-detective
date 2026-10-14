@@ -49,6 +49,7 @@ function makeStep(overrides: { solution: string; check: Partial<Check> }): Step 
     id: 's1',
     brief: '',
     theory: '',
+    teaches: [],
     solution: overrides.solution,
     hints: [],
     errors: [],

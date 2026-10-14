@@ -20,6 +20,9 @@ type LoadState =
  */
 export function CasePage({ id, storage }: { id: string; storage: ProgressStore }) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
+  // Выученное держим в состоянии: хранилище не реактивно, и без этого шпаргалка
+  // показывала бы новую конструкцию только после следующего рендера.
+  const [learned, setLearned] = useState(() => storage.getLearned())
 
   useEffect(() => {
     loadCase(id)
@@ -68,6 +71,8 @@ export function CasePage({ id, storage }: { id: string; storage: ProgressStore }
       kase={state.kase}
       initialStep={storage.getStep(id)}
       onStepChange={(index) => storage.setStep(id, index)}
+      onReach={(teaches) => setLearned(storage.learn(teaches))}
+      learned={learned}
       onFinished={() => storage.completeCase(id)}
     />
   )

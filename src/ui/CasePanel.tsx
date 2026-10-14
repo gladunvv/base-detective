@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import type { Case } from '../core/types.ts'
+import { useCheatsheet, titlesFor } from './cheatsheet.ts'
 import { Hints } from './Hints.tsx'
 import { Markdown } from './markdown.tsx'
 import type { useCaseEngine } from './useCaseEngine.ts'
@@ -15,8 +16,21 @@ type CasePanelProps = {
  * а не на монитор.
  */
 export function CasePanel({ kase, engine }: CasePanelProps) {
-  const { step, stepNumber, totalSteps, finished, verdict, accepted, hintsRevealed, revealHint, advance, retry } =
-    engine
+  const {
+    step,
+    stepNumber,
+    totalSteps,
+    stepTeaches,
+    finished,
+    verdict,
+    accepted,
+    hintsRevealed,
+    revealHint,
+    advance,
+    retry,
+  } = engine
+  const { entries } = useCheatsheet()
+  const teaches = titlesFor(stepTeaches, entries)
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto bg-folder p-6 text-ink">
@@ -27,6 +41,12 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
       <header className="font-mono">
         <p className="text-sm">
           ДЕЛО № {kase.id} · шаг {Math.min(stepNumber, totalSteps)} из {totalSteps}
+          {!finished && teaches.length > 0 && (
+            <>
+              {' · '}
+              <span className="font-bold">{teaches.join(' + ')}</span>
+            </>
+          )}
         </p>
         <h1 className="text-xl font-bold">{kase.title}</h1>
       </header>

@@ -1,0 +1,170 @@
+[
+  {
+    "id": "select",
+    "group": "Выборка",
+    "title": "SELECT",
+    "summary": "Запрос «покажи». Звёздочка `*` означает все колонки, какие есть, а `FROM` называет таблицу.",
+    "form": "SELECT * FROM таблица",
+    "example": "SELECT * FROM residents"
+  },
+  {
+    "id": "select-columns",
+    "group": "Выборка",
+    "title": "Выбор колонок",
+    "summary": "Вместо звёздочки — имена колонок через запятую. Порядок в запросе задаёт порядок в ответе.",
+    "form": "SELECT колонка1, колонка2 FROM таблица",
+    "example": "SELECT name, apartment FROM residents"
+  },
+  {
+    "id": "where",
+    "group": "Фильтры",
+    "title": "WHERE",
+    "summary": "Оставляет только строки, для которых условие верно. Текст берут в одинарные кавычки, числа пишут без них.",
+    "form": "WHERE колонка = значение",
+    "example": "WHERE status = 'в отъезде'"
+  },
+  {
+    "id": "compare",
+    "group": "Фильтры",
+    "title": "Сравнения",
+    "summary": "Кроме точного `=` для чисел есть `>` больше, `<` меньше, `>=` не меньше, `<=` не больше.",
+    "form": "WHERE колонка > значение",
+    "example": "WHERE weight_kg > 5"
+  },
+  {
+    "id": "and",
+    "group": "Фильтры",
+    "title": "AND",
+    "summary": "Соединяет условия: строка должна подойти под все сразу. Цепочку можно продолжать сколько нужно.",
+    "form": "WHERE условие1 AND условие2",
+    "example": "WHERE species = 'кот' AND color = 'серый'"
+  },
+  {
+    "id": "or",
+    "group": "Фильтры",
+    "title": "OR",
+    "summary": "Достаточно, чтобы выполнилось хотя бы одно условие. Нужен, когда сами не уверены, какое описание верное.",
+    "form": "WHERE условие1 OR условие2",
+    "example": "WHERE color = 'серый' OR color = 'бело-серый'"
+  },
+  {
+    "id": "in",
+    "group": "Фильтры",
+    "title": "IN",
+    "summary": "Короткая запись цепочки `OR` по одной и той же колонке. То же самое, только читается яснее.",
+    "form": "WHERE колонка IN (значение1, значение2)",
+    "example": "WHERE place IN ('фонтан', 'беседка', 'пирс')"
+  },
+  {
+    "id": "like",
+    "group": "Фильтры",
+    "title": "LIKE",
+    "summary": "Ищет по шаблону, а не по точному совпадению. Знак `%` заменяет любое количество любых символов.",
+    "form": "WHERE колонка LIKE '%кусок%'",
+    "example": "WHERE job LIKE '%сад%'"
+  },
+  {
+    "id": "order-by",
+    "group": "Порядок",
+    "title": "ORDER BY",
+    "summary": "Упорядочивает строки в ответе. По умолчанию от меньшего к большему; `DESC` разворачивает.",
+    "form": "ORDER BY колонка DESC",
+    "example": "ORDER BY weight_kg DESC"
+  },
+  {
+    "id": "limit",
+    "group": "Порядок",
+    "title": "LIMIT",
+    "summary": "Оставляет столько строк сверху, сколько попросили. Без `ORDER BY` бесполезен: отдаст первые попавшиеся.",
+    "form": "ORDER BY колонка DESC LIMIT 1",
+    "example": "ORDER BY minute DESC LIMIT 1"
+  },
+  {
+    "id": "distinct",
+    "group": "Порядок",
+    "title": "DISTINCT",
+    "summary": "Убирает повторяющиеся строки результата. Сравнивает строку целиком, а не отдельную колонку.",
+    "form": "SELECT DISTINCT колонка FROM таблица",
+    "example": "SELECT DISTINCT job FROM suspects"
+  },
+  {
+    "id": "join",
+    "group": "Соединения",
+    "title": "JOIN",
+    "summary": "Склеивает две таблицы по общему полю. Нужен, когда часть ответа лежит в одной таблице, часть — в другой.",
+    "form": "JOIN другая ON другая.ключ = эта.ключ",
+    "example": "JOIN trackers t ON t.pet_id = p.id"
+  },
+  {
+    "id": "multi-join",
+    "group": "Соединения",
+    "title": "Несколько JOIN",
+    "summary": "Одну и ту же таблицу можно присоединить дважды и больше, каждый раз под своим именем и со своим условием.",
+    "form": "JOIN т s1 ON ... JOIN т s2 ON ...",
+    "example": "JOIN sightings s1 ON s1.place = 'пирс'"
+  },
+  {
+    "id": "left-join",
+    "group": "Соединения",
+    "title": "LEFT JOIN",
+    "summary": "Оставляет все строки левой таблицы, даже если пары не нашлось. Вместе с `IS NULL` ищет отсутствие.",
+    "form": "LEFT JOIN другая ON ... WHERE другая.ключ IS NULL",
+    "example": "LEFT JOIN trackers t ON t.pet_id = p.id"
+  },
+  {
+    "id": "insert",
+    "group": "Изменение",
+    "title": "INSERT",
+    "summary": "Добавляет строку в таблицу. Перечисляют колонки, затем значения в том же порядке.",
+    "form": "INSERT INTO таблица (колонки) VALUES (значения)",
+    "example": "INSERT INTO pets (name) VALUES ('Сима')"
+  },
+  {
+    "id": "update",
+    "group": "Изменение",
+    "title": "UPDATE",
+    "summary": "Меняет уже существующие строки. Без `WHERE` изменит все — это самая частая дорогая ошибка.",
+    "form": "UPDATE таблица SET колонка = значение WHERE условие",
+    "example": "UPDATE catches SET weight_kg = 9.1 WHERE id = 17"
+  },
+  {
+    "id": "count",
+    "group": "Подсчёт",
+    "title": "COUNT",
+    "summary": "Считает строки. Первый случай, когда запрос возвращает то, чего в таблице нет: число вычислено, а не записано.",
+    "form": "SELECT COUNT(*) FROM таблица",
+    "example": "SELECT COUNT(*) FROM orders"
+  },
+  {
+    "id": "sum",
+    "group": "Подсчёт",
+    "title": "SUM",
+    "summary": "Складывает значения колонки по всем отобранным строкам.",
+    "form": "SELECT SUM(колонка) FROM таблица",
+    "example": "SELECT SUM(total) FROM orders"
+  },
+  {
+    "id": "avg",
+    "group": "Подсчёт",
+    "title": "AVG",
+    "summary": "Среднее по колонке. Рядом живут `MIN` и `MAX` — наименьшее и наибольшее.",
+    "form": "SELECT AVG(колонка) FROM таблица",
+    "example": "SELECT AVG(total) FROM orders"
+  },
+  {
+    "id": "group-by",
+    "group": "Подсчёт",
+    "title": "GROUP BY",
+    "summary": "Схлопывает строки в группы, и считает отдельно по каждой. Строки перестают быть единицей — ею становится группа.",
+    "form": "SELECT колонка, COUNT(*) FROM таблица GROUP BY колонка",
+    "example": "SELECT department, SUM(total) FROM orders GROUP BY department"
+  },
+  {
+    "id": "having",
+    "group": "Подсчёт",
+    "title": "HAVING",
+    "summary": "Фильтр по группам, а не по строкам. `WHERE` отсеивает строки до группировки и поэтому не умеет сравнивать суммы.",
+    "form": "GROUP BY колонка HAVING COUNT(*) > значение",
+    "example": "GROUP BY department HAVING SUM(total) > 100000"
+  }
+]

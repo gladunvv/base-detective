@@ -48,6 +48,13 @@ export const stepSchema = z.object({
   outro: z.string().default(''),
   /** Путь под public/ (например, "/cases/images/02/s1.svg"). Появляется вместе со штампом «Принято». */
   image: z.string().optional(),
+  /**
+   * Про какие конструкции этот шаг — id записей из `public/cheatsheet.json`.
+   * Связь идёт через название конструкции, а не через номер дела, поэтому
+   * перенумерация дел её не ломает. Конструкция открывается в шпаргалке, как
+   * только игрок до такого шага дошёл, и подписывается на экране дела.
+   */
+  teaches: z.array(z.string()).default([]),
 })
 
 export const dbSchema = z.object({

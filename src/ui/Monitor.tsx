@@ -1,10 +1,11 @@
+import { CheatSheet } from './CheatSheet.tsx'
 import { ResultTable } from './ResultTable.tsx'
 import { SchemaPanel } from './SchemaPanel.tsx'
 import { Terminal } from './Terminal.tsx'
 import type { useCaseEngine } from './useCaseEngine.ts'
 
 /** Правая колонка — машина: ввод запроса и результат, ничего третьего. */
-export function Monitor({ engine }: { engine: ReturnType<typeof useCaseEngine> }) {
+export function Monitor({ engine, learned }: { engine: ReturnType<typeof useCaseEngine>; learned: string[] }) {
   const { sql, setSql, run, submit, busy, rejected, accepted, outcome, schema, resetDatabase, step } = engine
 
   return (
@@ -23,6 +24,7 @@ export function Monitor({ engine }: { engine: ReturnType<typeof useCaseEngine> }
 
       <div className="flex flex-wrap items-start gap-2">
         <SchemaPanel schema={schema} />
+        <CheatSheet learned={learned} />
         <button
           type="button"
           onClick={() => void resetDatabase()}

@@ -52,6 +52,8 @@ type EngineOptions = {
   /** Шаг, на котором игрок остановился в прошлый заход. */
   initialStep?: number
   onStepChange?: (index: number) => void
+  /** Конструкции текущего шага. Срабатывает и при входе в дело, не только при переходе. */
+  onReach?: (teaches: string[]) => void
 }
 
 export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
@@ -76,6 +78,14 @@ export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
   const accepted = verdict?.verdict === 'accepted'
   // После отказа поле и кнопки заблокированы до «Попробовать ещё раз».
   const rejected = verdict !== null && !accepted
+
+  // Справка нужна во время работы над шагом, а не после: открываем конструкцию,
+  // как только игрок до шага дошёл.
+  const reach = options.onReach
+  const teaches = step?.teaches
+  useEffect(() => {
+    if (teaches) reach?.(teaches)
+  }, [reach, teaches])
 
   useEffect(() => {
     runner.reopen()
@@ -172,6 +182,8 @@ export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
     step,
     stepNumber: stepIndex + 1,
     totalSteps: kase.steps.length,
+    /** id конструкций текущего шага — для подписи на экране и для шпаргалки. */
+    stepTeaches: step?.teaches ?? [],
     finished,
     schema,
     sql,

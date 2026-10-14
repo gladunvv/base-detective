@@ -20,6 +20,12 @@ export type Progress = {
    * иначе человек, сменивший устройство, потеряет середину двенадцатишагового дела.
    */
   step: Record<string, number>
+  /**
+   * Конструкции, до которых игрок дошёл: id записей шпаргалки. Копятся здесь,
+   * а не вычисляются из дел, потому что иначе для одного вопроса «открыт ли
+   * ORDER BY» пришлось бы загружать все дела курса целиком.
+   */
+  learned: string[]
 }
 
 export interface StorageBackend {
@@ -37,7 +43,7 @@ function isEmptyProgress(raw: string | null): raw is null {
 
 function read(backend: StorageBackend): Progress {
   const raw = backend.getItem(KEY)
-  if (isEmptyProgress(raw)) return { completed: [], step: {} }
+  if (isEmptyProgress(raw)) return { completed: [], step: {}, learned: [] }
   try {
     const parsed: unknown = JSON.parse(raw)
     if (
@@ -54,12 +60,13 @@ function read(backend: StorageBackend): Progress {
         step: Object.fromEntries(
           Object.entries(step).filter(([, value]) => typeof value === 'number' && value >= 0),
         ),
+        learned: Array.isArray(saved.learned) ? saved.learned.filter((id) => typeof id === 'string') : [],
       }
     }
   } catch {
     // повреждённая запись — считаем, что прогресса нет, не падаем
   }
-  return { completed: [], step: {} }
+  return { completed: [], step: {}, learned: [] }
 }
 
 function write(backend: StorageBackend, progress: Progress): void {
@@ -88,12 +95,31 @@ export function createStorage(backend: StorageBackend) {
         write(backend, { ...progress, step })
         return
       }
-      write(backend, { completed: [...progress.completed, id], step })
+      write(backend, { ...progress, completed: [...progress.completed, id], step })
     },
 
     /** Шаг, на котором игрок остановился. Ноль — дело ещё не начато. */
     getStep(id: string): number {
       return read(backend).step[id] ?? 0
+    },
+
+    /** Конструкции, открытые в шпаргалке. */
+    getLearned(): string[] {
+      return read(backend).learned
+    },
+
+    /**
+     * Конструкция открывается, когда игрок до шага дошёл, а не когда решил его:
+     * справка нужна во время работы над шагом, а не после. Возвращает весь список —
+     * экран держит его в состоянии, иначе шпаргалка не узнает о новой записи.
+     */
+    learn(ids: string[]): string[] {
+      const progress = read(backend)
+      const fresh = ids.filter((id) => !progress.learned.includes(id))
+      if (fresh.length === 0) return progress.learned
+      const learned = [...progress.learned, ...fresh]
+      write(backend, { ...progress, learned })
+      return learned
     },
 
     setStep(id: string, index: number): void {

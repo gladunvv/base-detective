@@ -21,7 +21,7 @@ describe('storage', () => {
   })
 
   it('изначально прогресс пуст', () => {
-    expect(storage.getProgress()).toEqual({ completed: [], step: {} })
+    expect(storage.getProgress()).toEqual({ completed: [], step: {}, learned: [] })
   })
 
   it('первое дело разблокировано всегда', () => {
@@ -37,38 +37,38 @@ describe('storage', () => {
 
   it('completeCase добавляет id в прогресс', () => {
     storage.completeCase('00')
-    expect(storage.getProgress()).toEqual({ completed: ['00'], step: {} })
+    expect(storage.getProgress()).toEqual({ completed: ['00'], step: {}, learned: [] })
   })
 
   it('completeCase не дублирует id при повторном вызове', () => {
     storage.completeCase('00')
     storage.completeCase('00')
-    expect(storage.getProgress()).toEqual({ completed: ['00'], step: {} })
+    expect(storage.getProgress()).toEqual({ completed: ['00'], step: {}, learned: [] })
   })
 
   it('порядок прохождения сохраняется', () => {
     storage.completeCase('00')
     storage.completeCase('01')
-    expect(storage.getProgress()).toEqual({ completed: ['00', '01'], step: {} })
+    expect(storage.getProgress()).toEqual({ completed: ['00', '01'], step: {}, learned: [] })
   })
 
   it('resetProgress возвращает к начальному состоянию', () => {
     storage.completeCase('00')
     storage.completeCase('01')
     storage.resetProgress()
-    expect(storage.getProgress()).toEqual({ completed: [], step: {} })
+    expect(storage.getProgress()).toEqual({ completed: [], step: {}, learned: [] })
     expect(storage.isUnlocked('01')).toBe(false)
   })
 
   it('прогресс переживает пересоздание store поверх того же бэкенда', () => {
     storage.completeCase('00')
     const reopened = createStorage(backend)
-    expect(reopened.getProgress()).toEqual({ completed: ['00'], step: {} })
+    expect(reopened.getProgress()).toEqual({ completed: ['00'], step: {}, learned: [] })
   })
 
   it('повреждённая запись в бэкенде не роняет чтение', () => {
     backend.setItem('bd:progress', '{не json')
-    expect(storage.getProgress()).toEqual({ completed: [], step: {} })
+    expect(storage.getProgress()).toEqual({ completed: [], step: {}, learned: [] })
     expect(storage.isUnlocked('00')).toBe(true)
   })
 
@@ -107,7 +107,7 @@ describe('storage', () => {
   // Записи, сделанные версией без шагов, должны читаться как есть.
   it('старая запись без поля step читается без потерь', () => {
     backend.setItem('bd:progress', JSON.stringify({ completed: ['00'] }))
-    expect(storage.getProgress()).toEqual({ completed: ['00'], step: {} })
+    expect(storage.getProgress()).toEqual({ completed: ['00'], step: {}, learned: [] })
     expect(storage.getStep('00')).toBe(0)
   })
 
@@ -116,6 +116,24 @@ describe('storage', () => {
     expect(storage.getStep('01')).toBe(0)
     expect(storage.getStep('02')).toBe(2)
     expect(storage.getProgress().completed).toEqual(['00'])
+  })
+
+  it('пройденные конструкции копятся и не дублируются', () => {
+    storage.learn(['select', 'where'])
+    storage.learn(['where', 'order-by'])
+    expect(storage.getProgress().learned).toEqual(['select', 'where', 'order-by'])
+    expect(storage.getLearned()).toEqual(['select', 'where', 'order-by'])
+  })
+
+  it('пройденные конструкции переживают пересоздание store', () => {
+    storage.learn(['join'])
+    expect(createStorage(backend).getLearned()).toContain('join')
+  })
+
+  it('закрытие дела не стирает пройденные конструкции', () => {
+    storage.learn(['select'])
+    storage.completeCase('00')
+    expect(storage.getLearned()).toContain('select')
   })
 
   it('resetProgress стирает и шаги', () => {

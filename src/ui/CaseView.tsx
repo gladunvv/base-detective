@@ -15,13 +15,18 @@ export function CaseView({
   onFinished,
   initialStep,
   onStepChange,
+  onReach,
+  learned,
 }: {
   kase: Case
   onFinished?: () => void
   initialStep?: number
   onStepChange?: (index: number) => void
+  onReach?: (teaches: string[]) => void
+  /** Конструкции, открытые в шпаргалке. */
+  learned: string[]
 }) {
-  const engine = useCaseEngine(kase, { onFinished, initialStep, onStepChange })
+  const engine = useCaseEngine(kase, { onFinished, initialStep, onStepChange, onReach })
 
   return (
     <div className="flex min-h-dvh flex-col md:h-dvh md:flex-row md:overflow-hidden">
@@ -30,7 +35,7 @@ export function CaseView({
       </div>
 
       <div className="hidden md:flex md:h-full md:flex-1">
-        <Monitor engine={engine} />
+        <Monitor engine={engine} learned={learned} />
       </div>
 
       <div className="flex flex-col gap-4 bg-ink p-6 font-sans text-sm text-paper md:hidden">
