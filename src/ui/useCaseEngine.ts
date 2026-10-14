@@ -47,13 +47,24 @@ function makeFreshExecutor(schema: string, seed: string) {
   }
 }
 
-export function useCaseEngine(kase: Case, options: { onFinished?: () => void } = {}) {
+type EngineOptions = {
+  onFinished?: () => void
+  /** Шаг, на котором игрок остановился в прошлый заход. */
+  initialStep?: number
+  onStepChange?: (index: number) => void
+}
+
+export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
   // Инициализатор useState вызывается один раз — раннер создаётся ровно
   // один раз на дело, без чтения/записи ref во время рендера.
   const [runner] = useState(() => new SqlRunner({ schema: kase.db.schema, seed: kase.db.seed }))
 
   const [schema, setSchema] = useState<SchemaInfo>({})
-  const [stepIndex, setStepIndex] = useState(0)
+  // Хранилище движку не передаётся: он знает только число и колбэк, как и с onFinished.
+  // Чужой шаг (дело переписали, шагов стало меньше) молча прижимается к последнему.
+  const [stepIndex, setStepIndex] = useState(() =>
+    Math.min(Math.max(options.initialStep ?? 0, 0), kase.steps.length - 1),
+  )
   const [sql, setSql] = useState('')
   const [outcome, setOutcome] = useState<Outcome | null>(null)
   const [busy, setBusy] = useState(false)
@@ -135,6 +146,7 @@ export function useCaseEngine(kase: Case, options: { onFinished?: () => void } =
       return
     }
     setStepIndex(next)
+    options.onStepChange?.(next)
     // При persist_between_steps: false каждый шаг начинается с чистой базы —
     // иначе игрок унёс бы в новый шаг мутации, сделанные при исследовании прошлого.
     if (!kase.db.persist_between_steps) {

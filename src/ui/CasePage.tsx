@@ -63,5 +63,12 @@ export function CasePage({ id, storage }: { id: string; storage: ProgressStore }
     )
   }
 
-  return <CaseView kase={state.kase} onFinished={() => storage.completeCase(id)} />
+  return (
+    <CaseView
+      kase={state.kase}
+      initialStep={storage.getStep(id)}
+      onStepChange={(index) => storage.setStep(id, index)}
+      onFinished={() => storage.completeCase(id)}
+    />
+  )
 }

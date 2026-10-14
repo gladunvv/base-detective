@@ -13,6 +13,13 @@
 export type Progress = {
   /** id пройденных дел, в порядке прохождения, без повторов. */
   completed: string[]
+  /**
+   * На каком шаге игрок остановился в каждом незакрытом деле: id дела → номер шага.
+   * Лежит здесь, а не отдельным ключом, как подсказки: это именно прогресс, и когда
+   * он переедет на HTTP, место в деле должно переехать вместе с пройденными делами —
+   * иначе человек, сменивший устройство, потеряет середину двенадцатишагового дела.
+   */
+  step: Record<string, number>
 }
 
 export interface StorageBackend {
@@ -30,7 +37,7 @@ function isEmptyProgress(raw: string | null): raw is null {
 
 function read(backend: StorageBackend): Progress {
   const raw = backend.getItem(KEY)
-  if (isEmptyProgress(raw)) return { completed: [] }
+  if (isEmptyProgress(raw)) return { completed: [], step: {} }
   try {
     const parsed: unknown = JSON.parse(raw)
     if (
@@ -39,12 +46,20 @@ function read(backend: StorageBackend): Progress {
       'completed' in parsed &&
       Array.isArray((parsed as { completed: unknown }).completed)
     ) {
-      return { completed: (parsed as Progress).completed.filter((id) => typeof id === 'string') }
+      const saved = parsed as Partial<Progress>
+      // Записи без `step` остались от версии, где шаг не хранился вовсе.
+      const step = typeof saved.step === 'object' && saved.step !== null ? saved.step : {}
+      return {
+        completed: (saved.completed ?? []).filter((id) => typeof id === 'string'),
+        step: Object.fromEntries(
+          Object.entries(step).filter(([, value]) => typeof value === 'number' && value >= 0),
+        ),
+      }
     }
   } catch {
     // повреждённая запись — считаем, что прогресса нет, не падаем
   }
-  return { completed: [] }
+  return { completed: [], step: {} }
 }
 
 function write(backend: StorageBackend, progress: Progress): void {
@@ -66,8 +81,24 @@ export function createStorage(backend: StorageBackend) {
 
     completeCase(id: string): void {
       const progress = read(backend)
-      if (progress.completed.includes(id)) return
-      write(backend, { completed: [...progress.completed, id] })
+      // Дело закрыто — незачем помнить, на каком шаге его когда-то бросили.
+      const step = { ...progress.step }
+      delete step[id]
+      if (progress.completed.includes(id)) {
+        write(backend, { ...progress, step })
+        return
+      }
+      write(backend, { completed: [...progress.completed, id], step })
+    },
+
+    /** Шаг, на котором игрок остановился. Ноль — дело ещё не начато. */
+    getStep(id: string): number {
+      return read(backend).step[id] ?? 0
+    },
+
+    setStep(id: string, index: number): void {
+      const progress = read(backend)
+      write(backend, { ...progress, step: { ...progress.step, [id]: index } })
     },
 
     resetProgress(): void {

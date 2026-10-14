@@ -10,8 +10,18 @@ import { useCaseEngine } from './useCaseEngine.ts'
  * Схема базы при этом остаётся: дизайн-документ перечисляет её среди того, что
  * на телефоне доступно, а живёт она внутри монитора — пришлось повторить отдельно.
  */
-export function CaseView({ kase, onFinished }: { kase: Case; onFinished?: () => void }) {
-  const engine = useCaseEngine(kase, { onFinished })
+export function CaseView({
+  kase,
+  onFinished,
+  initialStep,
+  onStepChange,
+}: {
+  kase: Case
+  onFinished?: () => void
+  initialStep?: number
+  onStepChange?: (index: number) => void
+}) {
+  const engine = useCaseEngine(kase, { onFinished, initialStep, onStepChange })
 
   return (
     <div className="flex min-h-dvh flex-col md:h-dvh md:flex-row md:overflow-hidden">
