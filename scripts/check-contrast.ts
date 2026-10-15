@@ -44,6 +44,8 @@ const PAIRS: Pair[] = [
   { what: 'недоступная папка', fg: ['folder', 0.7], bg: 'ink' },
   { what: 'номер и заголовок дела на карточке', fg: 'ink', bg: 'folder' },
   { what: 'штамп ЗАКРЫТО на карточке', fg: 'stamp', bg: 'folder' },
+  { what: 'кружок пройденного шага', fg: 'ink', bg: 'folder', large: true },
+  { what: 'кружок будущего шага', fg: ['ink', 0.6], bg: 'folder', large: true },
   { what: 'задание и теория на бумаге', fg: 'ink', bg: 'paper' },
   { what: 'подсказки на бумаге', fg: ['ink', 0.9], bg: 'paper' },
   // Замыленные подсказки в список не входят: их нарочно нельзя прочитать,

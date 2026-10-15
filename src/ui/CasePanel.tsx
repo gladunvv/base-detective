@@ -49,6 +49,7 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
           )}
         </p>
         <h1 className="text-xl font-bold">{kase.title}</h1>
+        <StepDots done={finished ? totalSteps : stepNumber - 1} total={totalSteps} />
       </header>
 
       <Markdown text={kase.intro} className="font-sans text-sm leading-relaxed" />
@@ -118,6 +119,34 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
           )}
         </section>
       ) : null}
+    </div>
+  )
+}
+
+/**
+ * Сколько шагов позади и сколько впереди — одним взглядом. На трёх шагах это
+ * украшение, на тринадцати — ответ на «долго ли ещё», который иначе приходится
+ * вычитывать из строки с номером.
+ *
+ * Для скринридера скрыто: соседняя строка «шаг 2 из 13» говорит то же самое,
+ * а тринадцать безымянных кружков — только шум. Кружки не кликабельны: движок
+ * не умеет открывать произвольный шаг, и прыжок вперёд ломал бы проверку.
+ */
+function StepDots({ done, total }: { done: number; total: number }) {
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5" aria-hidden="true">
+      {Array.from({ length: total }, (_, i) => (
+        <span
+          key={i}
+          className={
+            i < done
+              ? 'size-2.5 rounded-full bg-ink'
+              : i === done
+                ? 'size-2.5 rounded-full border-2 border-ink'
+                : 'size-2.5 rounded-full border border-ink/60'
+          }
+        />
+      ))}
     </div>
   )
 }
