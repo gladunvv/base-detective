@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { Link } from 'react-router'
 import type { Case } from '../core/types.ts'
 import { useCheatsheet, titlesFor } from './cheatsheet.ts'
@@ -137,21 +138,24 @@ function StepDots({ current, total, finished }: { current: number; total: number
   const done = finished ? total : current - 1
   return (
     <div
-      className="mt-2 flex flex-wrap gap-1.5"
+      className="mt-2 flex items-center"
       role="img"
       aria-label={finished ? `Дело закрыто, шагов: ${total}` : `Шаг ${current} из ${total}`}
     >
       {Array.from({ length: total }, (_, i) => (
-        <span
-          key={i}
-          className={
-            i < done
-              ? 'size-2.5 rounded-full bg-ink'
-              : i === done
-                ? 'size-2.5 rounded-full border-2 border-ink'
-                : 'size-2.5 rounded-full border border-ink/60'
-          }
-        />
+        <Fragment key={i}>
+          {/* Лента между кружками: пройденный отрезок тёмный, оставшийся — бледный. */}
+          {i > 0 && <span className={`h-0.5 w-2 ${i <= done ? 'bg-ink' : 'bg-ink/60'}`} />}
+          <span
+            className={
+              i < done
+                ? 'size-3.5 rounded-full bg-ink'
+                : i === done
+                  ? 'size-3.5 rounded-full border-3 border-ink'
+                  : 'size-3.5 rounded-full border border-ink/60'
+            }
+          />
+        </Fragment>
       ))}
     </div>
   )
