@@ -40,7 +40,7 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
 
       <header className="font-mono">
         <p className="text-sm">
-          ДЕЛО № {kase.id} · шаг {Math.min(stepNumber, totalSteps)} из {totalSteps}
+          ДЕЛО № {kase.id}
           {!finished && teaches.length > 0 && (
             <>
               {' · '}
@@ -49,7 +49,7 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
           )}
         </p>
         <h1 className="text-xl font-bold">{kase.title}</h1>
-        <StepDots done={finished ? totalSteps : stepNumber - 1} total={totalSteps} />
+        <StepDots current={Math.min(stepNumber, totalSteps)} total={totalSteps} finished={finished} />
       </header>
 
       <Markdown text={kase.intro} className="font-sans text-sm leading-relaxed" />
@@ -124,17 +124,23 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
 }
 
 /**
- * Сколько шагов позади и сколько впереди — одним взглядом. На трёх шагах это
- * украшение, на тринадцати — ответ на «долго ли ещё», который иначе приходится
- * вычитывать из строки с номером.
+ * Сколько шагов позади и сколько впереди — одним взглядом. Номер шага словами
+ * рядом не пишется: это тот же факт во второй раз, а длину хвоста кружки
+ * показывают лучше, чем число.
  *
- * Для скринридера скрыто: соседняя строка «шаг 2 из 13» говорит то же самое,
- * а тринадцать безымянных кружков — только шум. Кружки не кликабельны: движок
- * не умеет открывать произвольный шаг, и прыжок вперёд ломал бы проверку.
+ * Глазу достаётся ряд, скринридеру — та же строка, что была раньше в шапке;
+ * тринадцать отдельных кружков он бы читал как тринадцать пустых элементов.
+ * Кружки не кликабельны: движок не умеет открывать произвольный шаг, и прыжок
+ * вперёд ломал бы проверку.
  */
-function StepDots({ done, total }: { done: number; total: number }) {
+function StepDots({ current, total, finished }: { current: number; total: number; finished: boolean }) {
+  const done = finished ? total : current - 1
   return (
-    <div className="mt-2 flex flex-wrap gap-1.5" aria-hidden="true">
+    <div
+      className="mt-2 flex flex-wrap gap-1.5"
+      role="img"
+      aria-label={finished ? `Дело закрыто, шагов: ${total}` : `Шаг ${current} из ${total}`}
+    >
       {Array.from({ length: total }, (_, i) => (
         <span
           key={i}
