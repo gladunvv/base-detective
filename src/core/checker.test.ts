@@ -372,18 +372,30 @@ describe('дело 00.json целиком', () => {
 })
 
 describe('дело 00.json: попытка обмана хардкодом ловится', () => {
+  // Берём последний шаг: его ответ — одна строка, и выписать её руками быстрее,
+  // чем написать запрос. Там, где ответ в двадцать четыре строки, обман дороже
+  // честного решения, поэтому shadow на первых шагах и не включён.
   it('ответ, верный на seed, но захардкоженный — отклоняется на shadow_seed', async () => {
     const root = fileURLToPath(new URL('../..', import.meta.url))
     const raw = JSON.parse(readFileSync(join(root, 'public', 'cases', '00.json'), 'utf8'))
     const kase = parseCase(raw, '00.json')
-    const step = kase.steps[0] // требует shadow: true
+    const step = kase.steps[kase.steps.length - 1]
     expect(step.check.shadow).toBe(true)
+
+    // Ровно та строка, которую отдаёт эталон на основной базе, — но не запрос, а список значений.
+    const playerSql = "SELECT 7 AS apartment, 'Галина Удод' AS name, 66.2 AS cubes"
+
+    const withoutShadow = await checkAnswer({
+      step: { ...step, check: { ...step.check, shadow: false } },
+      playerSql,
+      runOnMain: executorFor(kase.db.schema, kase.db.seed),
+    })
+    // Без второй базы подлог неотличим от решения — ради этого shadow и существует.
+    expect(withoutShadow.verdict).toBe('accepted')
 
     const verdict = await checkAnswer({
       step,
-      // Совпадает построчно с реальным ответом на основной seed, но это не запрос, а список значений.
-      playerSql:
-        "SELECT 'Анна Верес' AS name UNION ALL SELECT 'Борис Клем' UNION ALL SELECT 'Вера Долина' UNION ALL SELECT 'Глеб Марин'",
+      playerSql,
       runOnMain: executorFor(kase.db.schema, kase.db.seed),
       runOnShadow: executorFor(kase.db.schema, kase.db.shadow_seed!),
     })
