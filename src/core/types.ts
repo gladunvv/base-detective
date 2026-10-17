@@ -28,6 +28,11 @@ export const checkSchema = z
     /** Конструкции, которые задумано применить: их отсутствие — замечание, не ошибка. */
     require: z.array(z.string()).default([]),
     forbid: z.array(z.string()).default([]),
+    /**
+     * Шаг, где пустой ответ и есть ответ: иначе проверка дел считает пустой
+     * эталон поломкой — в остальных случаях это признак опечатки в solution.
+     */
+    expect_empty: z.boolean().default(false),
     /** Таблица для `mode: schema`. */
     table: z.string().nullable().default(null),
   })

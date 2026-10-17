@@ -60,6 +60,7 @@ function makeStep(overrides: { solution: string; check: Partial<Check> }): Step 
       shadow: false,
       require: [],
       forbid: [],
+      expect_empty: false,
       table: null,
       ...overrides.check,
     },

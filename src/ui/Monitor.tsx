@@ -39,7 +39,10 @@ export function Monitor({ engine, learned }: { engine: ReturnType<typeof useCase
       )}
       {outcome?.kind === 'empty' && (
         <p className="rounded border border-glow/30 bg-screen p-3 font-mono text-sm text-glow">
-          Запрос отработал, база ничего не нашла. Скорее всего, лишнее условие.
+          {/* Там, где пустота и есть ответ, догадка про лишнее условие сбивала бы с толку. */}
+          {step?.check.expect_empty
+            ? 'Запрос отработал, подходящих строк в базе нет.'
+            : 'Запрос отработал, база ничего не нашла. Скорее всего, лишнее условие.'}
         </p>
       )}
       {outcome?.kind === 'result' && <ResultTable result={outcome.result} />}

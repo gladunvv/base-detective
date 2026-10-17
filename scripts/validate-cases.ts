@@ -68,7 +68,7 @@ function checkSolutions(db: Database, kase: Case, label: string): string[] {
     try {
       const result = db.exec(step.solution)
       const rows = result[0]?.values.length ?? 0
-      if (step.check.mode === 'resultset' && rows === 0) {
+      if (step.check.mode === 'resultset' && rows === 0 && !step.check.expect_empty) {
         problems.push(`шаг ${step.id}: эталон на ${label} вернул пустой результат`)
       }
     } catch (error) {
