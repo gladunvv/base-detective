@@ -384,7 +384,7 @@ describe('дело 00.json: попытка обмана хардкодом ло�
     expect(step.check.shadow).toBe(true)
 
     // Ровно та строка, которую отдаёт эталон на основной базе, — но не запрос, а список значений.
-    const playerSql = "SELECT 7 AS apartment, 'Галина Удод' AS name, 66.2 AS cubes"
+    const playerSql = "SELECT 11 AS room, 'Паша Горелик' AS name, 1904 AS gigabytes"
 
     const withoutShadow = await checkAnswer({
       step: { ...step, check: { ...step.check, shadow: false } },
