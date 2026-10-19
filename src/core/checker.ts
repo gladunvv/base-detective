@@ -18,7 +18,7 @@ export type CheckVerdict =
 /** Выполняет `sql` на свежей базе (schema + seed) и возвращает результат или ошибку. */
 export type FreshExecutor = (sql: string) => Promise<RunOutcome>
 
-export type CheckParams = {
+type CheckParams = {
   step: Step
   /** Запрос, который написал игрок. */
   playerSql: string
@@ -81,12 +81,6 @@ function buildQuery(check: Check, sql: string): string {
       return sql
     case 'rowcount':
       return `${sql};\nSELECT changes() AS n`
-    case 'schema': {
-      if (check.table === null) {
-        throw new TypeError('check.table обязателен при mode "schema"')
-      }
-      return `${sql};\nPRAGMA table_info(${check.table})`
-    }
   }
 }
 
@@ -100,8 +94,6 @@ function compareByMode(check: Check, expected: SqlResult, actual: SqlResult): Co
         : { ok: false, reason: 'результат запроса не совпадает с эталоном' }
     case 'rowcount':
       return compareRowCounts(expected, actual)
-    case 'schema':
-      return compareSchemas(expected, actual)
   }
 }
 
@@ -122,7 +114,7 @@ function compareByMode(check: Check, expected: SqlResult, actual: SqlResult): Co
  * Потеря от этого почти нулевая: выбранная не та колонка ловится значениями,
  * перепутанный порядок — тоже, лишняя или недостающая — числом колонок.
  */
-export function compareResultSets(expected: SqlResult, actual: SqlResult, ordered: boolean): boolean {
+function compareResultSets(expected: SqlResult, actual: SqlResult, ordered: boolean): boolean {
   if (expected.columns.length !== actual.columns.length) return false
   if (expected.rows.length !== actual.rows.length) return false
 
@@ -177,62 +169,6 @@ function compareRowCounts(expected: SqlResult, actual: SqlResult): Comparison {
   return expectedN === actualN
     ? { ok: true }
     : { ok: false, reason: `затронуто строк: ожидалось ${expectedN}, получено ${actualN}` }
-}
-
-// --- schema -------------------------------------------------------------
-
-type ColumnInfo = {
-  name: string
-  type: string
-  notnull: boolean
-  pk: number
-}
-
-/** Разбирает вывод `PRAGMA table_info(...)` — колонки идут в фиксированном порядке. */
-function parseTableInfo(result: SqlResult): ColumnInfo[] {
-  const idx = (name: string): number => result.columns.indexOf(name)
-  const nameIdx = idx('name')
-  const typeIdx = idx('type')
-  const notnullIdx = idx('notnull')
-  const pkIdx = idx('pk')
-
-  return result.rows.map((row) => ({
-    name: String(row[nameIdx]),
-    type: String(row[typeIdx]),
-    notnull: Number(row[notnullIdx]) !== 0,
-    pk: Number(row[pkIdx]),
-  }))
-}
-
-/** Сверка имён, типов, `pk`, `notnull`. Порядок столбцов и регистр типов роли не играют. */
-function compareSchemas(expected: SqlResult, actual: SqlResult): Comparison {
-  const expectedColumns = parseTableInfo(expected)
-  const actualByName = new Map(parseTableInfo(actual).map((c) => [c.name, c]))
-
-  if (actualByName.size !== expectedColumns.length) {
-    return { ok: false, reason: `ожидалось колонок: ${expectedColumns.length}, получено: ${actualByName.size}` }
-  }
-
-  for (const expectedColumn of expectedColumns) {
-    const actualColumn = actualByName.get(expectedColumn.name)
-    if (!actualColumn) {
-      return { ok: false, reason: `нет колонки "${expectedColumn.name}"` }
-    }
-    if (actualColumn.type.toLowerCase() !== expectedColumn.type.toLowerCase()) {
-      return {
-        ok: false,
-        reason: `у колонки "${expectedColumn.name}" тип "${actualColumn.type}", ожидался "${expectedColumn.type}"`,
-      }
-    }
-    if (actualColumn.notnull !== expectedColumn.notnull) {
-      return { ok: false, reason: `у колонки "${expectedColumn.name}" не совпадает NOT NULL` }
-    }
-    if (actualColumn.pk !== expectedColumn.pk) {
-      return { ok: false, reason: `у колонки "${expectedColumn.name}" не совпадает PRIMARY KEY` }
-    }
-  }
-
-  return { ok: true }
 }
 
 // --- require / forbid -------------------------------------------------------

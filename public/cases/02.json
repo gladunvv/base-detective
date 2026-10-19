@@ -23,8 +23,7 @@
         "require": [
           "AND"
         ],
-        "forbid": [],
-        "table": null
+        "forbid": []
       },
       "hints": [
         "Нужны оба условия сразу, через AND.",
@@ -50,8 +49,7 @@
         "require": [
           "AND"
         ],
-        "forbid": [],
-        "table": null
+        "forbid": []
       },
       "hints": [
         "Допишите ещё одно условие тем же способом, что и в прошлый раз.",
@@ -77,8 +75,7 @@
         "require": [
           "JOIN"
         ],
-        "forbid": [],
-        "table": null
+        "forbid": []
       },
       "hints": [
         "Нужны обе таблицы: имя — из pets, код — из trackers.",

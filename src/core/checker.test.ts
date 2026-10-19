@@ -61,7 +61,6 @@ function makeStep(overrides: { solution: string; check: Partial<Check> }): Step 
       require: [],
       forbid: [],
       expect_empty: false,
-      table: null,
       ...overrides.check,
     },
   }
@@ -257,63 +256,6 @@ describe('require / forbid', () => {
       runOnMain: runOnMain(),
     })
     expect(verdict).toEqual({ verdict: 'accepted' })
-  })
-})
-
-describe('schema', () => {
-  const ddlSchema = 'CREATE TABLE placeholder (x INTEGER);'
-  const emptySeed = ''
-
-  it('засчитывает совпадающую схему независимо от порядка столбцов', async () => {
-    const step = makeStep({
-      solution: 'CREATE TABLE clues (id INTEGER PRIMARY KEY, label TEXT NOT NULL)',
-      check: { mode: 'schema', table: 'clues' },
-    })
-    const verdict = await checkAnswer({
-      step,
-      playerSql: 'CREATE TABLE clues (label TEXT NOT NULL, id INTEGER PRIMARY KEY)',
-      runOnMain: executorFor(ddlSchema, emptySeed),
-    })
-    expect(verdict).toEqual({ verdict: 'accepted' })
-  })
-
-  it('не важен регистр типа', async () => {
-    const step = makeStep({
-      solution: 'CREATE TABLE clues (id INTEGER PRIMARY KEY, label TEXT NOT NULL)',
-      check: { mode: 'schema', table: 'clues' },
-    })
-    const verdict = await checkAnswer({
-      step,
-      playerSql: 'CREATE TABLE clues (id integer PRIMARY KEY, label text NOT NULL)',
-      runOnMain: executorFor(ddlSchema, emptySeed),
-    })
-    expect(verdict).toEqual({ verdict: 'accepted' })
-  })
-
-  it('отклоняет несовпадающий NOT NULL', async () => {
-    const step = makeStep({
-      solution: 'CREATE TABLE clues (id INTEGER PRIMARY KEY, label TEXT NOT NULL)',
-      check: { mode: 'schema', table: 'clues' },
-    })
-    const verdict = await checkAnswer({
-      step,
-      playerSql: 'CREATE TABLE clues (id INTEGER PRIMARY KEY, label TEXT)',
-      runOnMain: executorFor(ddlSchema, emptySeed),
-    })
-    expect(verdict.verdict).toBe('rejected')
-  })
-
-  it('отклоняет недостающую колонку', async () => {
-    const step = makeStep({
-      solution: 'CREATE TABLE clues (id INTEGER PRIMARY KEY, label TEXT NOT NULL)',
-      check: { mode: 'schema', table: 'clues' },
-    })
-    const verdict = await checkAnswer({
-      step,
-      playerSql: 'CREATE TABLE clues (id INTEGER PRIMARY KEY)',
-      runOnMain: executorFor(ddlSchema, emptySeed),
-    })
-    expect(verdict.verdict).toBe('rejected')
   })
 })
 

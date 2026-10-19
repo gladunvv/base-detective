@@ -15,12 +15,12 @@ export type WorkerResponse =
   | { id: number; ok: true; result: SqlResult }
   | { id: number; ok: false; error: string }
 
-export type RunnerDb = {
+type RunnerDb = {
   schema: string
   seed: string
 }
 
-export const TIMEOUT_MESSAGE =
+const TIMEOUT_MESSAGE =
   'Запрос слишком тяжёлый и был остановлен. Скорее всего, таблицы соединились без условия.'
 
 const TIMEOUT_MS = 5000

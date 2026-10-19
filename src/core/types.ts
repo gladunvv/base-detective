@@ -16,10 +16,9 @@ export const errorRuleSchema = z.object({
   say: z.string().min(1),
 })
 
-export const checkModeSchema = z.enum(['resultset', 'schema', 'rowcount'])
+export const checkModeSchema = z.enum(['resultset', 'rowcount'])
 
-export const checkSchema = z
-  .object({
+export const checkSchema = z.object({
     mode: checkModeSchema,
     /** Учитывать порядок строк при сравнении. */
     ordered: z.boolean().default(false),
@@ -33,12 +32,6 @@ export const checkSchema = z
      * эталон поломкой — в остальных случаях это признак опечатки в solution.
      */
     expect_empty: z.boolean().default(false),
-    /** Таблица для `mode: schema`. */
-    table: z.string().nullable().default(null),
-  })
-  .refine((c) => c.mode !== 'schema' || c.table !== null, {
-    message: 'при mode "schema" нужно указать table',
-    path: ['table'],
   })
 
 export const stepSchema = z.object({

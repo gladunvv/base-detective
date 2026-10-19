@@ -22,8 +22,7 @@
         "shadow": false,
         "require": [],
         "forbid": [],
-        "expect_empty": false,
-        "table": null
+        "expect_empty": false
       },
       "hints": [
         "Нужна вся таблица целиком: и все строки, и все колонки.",
@@ -52,8 +51,7 @@
         "shadow": false,
         "require": [],
         "forbid": [],
-        "expect_empty": false,
-        "table": null
+        "expect_empty": false
       },
       "hints": [
         "Теперь нужны не все колонки, а только две.",
@@ -79,8 +77,7 @@
           "WHERE"
         ],
         "forbid": [],
-        "expect_empty": false,
-        "table": null
+        "expect_empty": false
       },
       "hints": [
         "Нужны не все комнаты, а только те, где стоит приставка: строки надо отфильтровать.",
@@ -111,8 +108,7 @@
           "WHERE"
         ],
         "forbid": [],
-        "expect_empty": false,
-        "table": null
+        "expect_empty": false
       },
       "hints": [
         "Условие теперь не на равенство, а на «больше».",
@@ -143,8 +139,7 @@
           "ORDER BY"
         ],
         "forbid": [],
-        "expect_empty": false,
-        "table": null
+        "expect_empty": false
       },
       "hints": [
         "Отбор остаётся прежним, добавляется только порядок.",
@@ -170,8 +165,7 @@
           "LIMIT"
         ],
         "forbid": [],
-        "expect_empty": false,
-        "table": null
+        "expect_empty": false
       },
       "hints": [
         "Запрос тот же, что и на прошлом шаге, — к нему добавляется ограничение.",

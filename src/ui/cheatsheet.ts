@@ -23,7 +23,7 @@ function load(): Promise<CheatEntry[]> {
   return cached
 }
 
-export type CheatsheetState = { entries: CheatEntry[] | null; failed: boolean }
+type CheatsheetState = { entries: CheatEntry[] | null; failed: boolean }
 
 /**
  * Шпаргалка деда — справочник конструкций, на который шаги ссылаются через
