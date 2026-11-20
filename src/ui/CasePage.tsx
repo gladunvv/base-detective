@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Navigate } from 'react-router'
 import { CaseLoadError, loadCase } from '../core/caseLoader.ts'
 import type { ProgressStore } from '../core/storage.ts'
@@ -23,6 +23,9 @@ export function CasePage({ id, storage }: { id: string; storage: ProgressStore }
   // Выученное держим в состоянии: хранилище не реактивно, и без этого шпаргалка
   // показывала бы новую конструкцию только после следующего рендера.
   const [learned, setLearned] = useState(() => storage.getLearned())
+  const handleReach = useCallback((teaches: string[]) => {
+    setLearned(storage.learn(teaches))
+  }, [storage])
 
   useEffect(() => {
     loadCase(id)
@@ -71,7 +74,7 @@ export function CasePage({ id, storage }: { id: string; storage: ProgressStore }
       kase={state.kase}
       initialStep={storage.getStep(id)}
       onStepChange={(index) => storage.setStep(id, index)}
-      onReach={(teaches) => setLearned(storage.learn(teaches))}
+      onReach={handleReach}
       learned={learned}
       onFinished={() => storage.completeCase(id)}
     />

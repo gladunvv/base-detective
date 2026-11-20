@@ -1,5 +1,5 @@
 import initSqlJs, { type Database } from 'sql.js'
-import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
+import wasmUrl from 'sql.js/dist/sql-wasm-browser.wasm?url'
 import { execLast, openDb } from '../core/sqlite.ts'
 import type { SqlResult, WorkerRequest, WorkerResponse } from '../core/sqlRunner.ts'
 
