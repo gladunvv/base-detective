@@ -155,10 +155,59 @@ describe('resultset', () => {
     expect(verdict.verdict).toBe('rejected')
   })
 
-  it('NULL и пустая строка считаются одним значением', async () => {
-    const step = makeStep({ solution: "SELECT NULL AS job", check: {} })
-    const verdict = await checkAnswer({ step, playerSql: "SELECT '' AS job", runOnMain: runOnMain() })
-    expect(verdict.verdict).toBe('accepted')
+  describe.each([false, true])('сравнение значений при ordered: %s', (ordered) => {
+    it.each([
+      ['совпадающие числа и строки', "SELECT 1, 'повар'", "SELECT 1 AS n, 'повар' AS job", 'accepted'],
+      ['число и его текстовое представление', 'SELECT 1', "SELECT '1'", 'rejected'],
+      ['одинаковые BLOB', "SELECT X'00FF'", "SELECT X'00FF' AS payload", 'accepted'],
+      ['BLOB с разными байтами', "SELECT X'00FF'", "SELECT X'00FE'", 'rejected'],
+      ['BLOB и текст', "SELECT X'41'", "SELECT 'A'", 'rejected'],
+      [
+        'другая кратность при равном числе строк',
+        'SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 2',
+        'SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 2',
+        'rejected',
+      ],
+      ['лишняя колонка с тем же значением', 'SELECT 1', 'SELECT 1, 1', 'rejected'],
+      // Фиксирует текущее поведение. Ожидание изменится в BD-03.
+      ['NULL и пустая строка', 'SELECT NULL', "SELECT ''", 'accepted'],
+    ] as const)('%s', async (_name, solution, playerSql, expected) => {
+      const step = makeStep({ solution, check: { ordered } })
+      const verdict = await checkAnswer({ step, playerSql, runOnMain: runOnMain() })
+      expect(verdict.verdict).toBe(expected)
+    })
+  })
+
+  it.each([
+    ['совпавшие дубликаты в другом порядке', 'SELECT 2 UNION ALL SELECT 1 UNION ALL SELECT 1', 'accepted'],
+    ['дубликат потерян', 'SELECT 1 UNION SELECT 2', 'rejected'],
+  ] as const)('%s', async (_name, playerSql, expected) => {
+    const step = makeStep({ solution: 'SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 2', check: {} })
+    const verdict = await checkAnswer({ step, playerSql, runOnMain: runOnMain() })
+    expect(verdict.verdict).toBe(expected)
+  })
+
+  it.each([
+    ['пустой результат для отсутствующей записи', 'SELECT name FROM suspects WHERE id IN (99)', true, 'accepted'],
+    ['лишняя строка при пустом эталоне', 'SELECT name FROM suspects WHERE id = 1', true, 'rejected'],
+    ['пустой результат при непустом эталоне', 'SELECT name FROM suspects WHERE id = 99', false, 'rejected'],
+  ] as const)('%s', async (_name, playerSql, expectEmpty, expected) => {
+    const id = expectEmpty ? 99 : 1
+    const step = makeStep({
+      solution: `SELECT name FROM suspects WHERE id = ${id}`,
+      check: { expect_empty: expectEmpty },
+    })
+    const verdict = await checkAnswer({ step, playerSql, runOnMain: runOnMain() })
+    expect(verdict.verdict).toBe(expected)
+  })
+
+  it('сообщает о поломке эталона отдельно от ошибки игрока', async () => {
+    const step = makeStep({ solution: 'SELECT missing_column FROM suspects', check: {} })
+    const verdict = await checkAnswer({ step, playerSql: 'SELECT name FROM suspects', runOnMain: runOnMain() })
+    expect(verdict).toEqual({
+      verdict: 'error',
+      error: 'внутренняя ошибка дела: эталон не выполнился (no such column: missing_column)',
+    })
   })
 
   it('отклоняет неверный результат', async () => {
@@ -260,43 +309,34 @@ describe('require / forbid', () => {
 })
 
 describe('rowcount', () => {
-  const schema = 'CREATE TABLE suspects (id INTEGER PRIMARY KEY, name TEXT, job TEXT);'
-  const seed = suspectsSeed
-
-  it('засчитывает совпадающее число затронутых строк', async () => {
+  it.each([
+    ['правильное изменение', "UPDATE suspects SET job = 'уволен' WHERE id = 2", 'accepted'],
+    // Текущая проверка сравнивает только число строк. Проверка состояния запланирована в BD-14.
+    ['неверное значение при том же числе строк', "UPDATE suspects SET job = 'бывший повар' WHERE id = 2", 'accepted'],
+    ['ни одна строка не изменена', "UPDATE suspects SET job = 'уволен' WHERE id = 99", 'rejected'],
+    ['изменены обе строки', "UPDATE suspects SET job = 'уволен'", 'rejected'],
+  ] as const)('%s', async (_name, playerSql, expected) => {
     const step = makeStep({
       solution: "UPDATE suspects SET job = 'уволен' WHERE job = 'повар'",
       check: { mode: 'rowcount' },
     })
     const verdict = await checkAnswer({
       step,
-      playerSql: "UPDATE suspects SET job = 'бывший повар' WHERE job = 'повар'",
-      runOnMain: executorFor(schema, seed),
+      playerSql,
+      runOnMain: executorFor(suspectsSchema, suspectsSeed),
     })
-    expect(verdict).toEqual({ verdict: 'accepted' })
-  })
-
-  it('отклоняет несовпадающее число затронутых строк', async () => {
-    const step = makeStep({
-      solution: "UPDATE suspects SET job = 'уволен' WHERE job = 'повар'",
-      check: { mode: 'rowcount' },
-    })
-    const verdict = await checkAnswer({
-      step,
-      playerSql: "UPDATE suspects SET job = 'уволен'",
-      runOnMain: executorFor(schema, seed),
-    })
-    expect(verdict.verdict).toBe('rejected')
+    expect(verdict.verdict).toBe(expected)
   })
 })
 
-describe('дело 00.json целиком', () => {
+describe.each(['00', '01', '02', '03'])('дело %s.json целиком', (caseId) => {
   let kase: Case
 
   beforeAll(() => {
     const root = fileURLToPath(new URL('../..', import.meta.url))
-    const raw = JSON.parse(readFileSync(join(root, 'public', 'cases', '00.json'), 'utf8'))
-    kase = parseCase(raw, '00.json')
+    const filename = `${caseId}.json`
+    const raw = JSON.parse(readFileSync(join(root, 'public', 'cases', filename), 'utf8'))
+    kase = parseCase(raw, filename)
   })
 
   it('решение каждого шага засчитывается', async () => {
