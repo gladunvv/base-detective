@@ -66,6 +66,12 @@ function makeStep(overrides: { solution: string; check: Partial<Check> }): Step 
   }
 }
 
+function loadCaseFixture(id: string): Case {
+  const filename = `${id}.json`
+  const path = new URL(`../../public/cases/${filename}`, import.meta.url)
+  return parseCase(JSON.parse(readFileSync(path, 'utf8')), filename)
+}
+
 describe('resultset', () => {
   const runOnMain = () => executorFor(suspectsSchema, suspectsSeed)
 
@@ -336,10 +342,7 @@ describe.each(['00', '01', '02', '03'])('дело %s.json целиком', (case
   let kase: Case
 
   beforeAll(() => {
-    const root = fileURLToPath(new URL('../..', import.meta.url))
-    const filename = `${caseId}.json`
-    const raw = JSON.parse(readFileSync(join(root, 'public', 'cases', filename), 'utf8'))
-    kase = parseCase(raw, filename)
+    kase = loadCaseFixture(caseId)
   })
 
   it('решение каждого шага засчитывается', async () => {
@@ -357,14 +360,36 @@ describe.each(['00', '01', '02', '03'])('дело %s.json целиком', (case
   })
 })
 
+describe('дело 01.json: поиск слова в описании без совпадений на основном seed', () => {
+  it.each([
+    ['поиск через INSTR', "SELECT category, route, description FROM finds WHERE INSTR(description, 'хомяк') > 0", 'accepted'],
+    ['запрос с условием, которое всегда ложно', 'SELECT category, route, description FROM finds WHERE 1=0', 'rejected'],
+  ] as const)('%s', async (_name, playerSql, expected) => {
+    const { db, steps } = loadCaseFixture('01')
+    const step = steps.find(({ id }) => id === 's9')!
+    const verdict = await checkAnswer({
+      step,
+      playerSql,
+      runOnMain: executorFor(db.schema, db.seed),
+      runOnShadow: executorFor(db.schema, db.shadow_seed!),
+    })
+    expect(verdict.verdict).toBe(expected)
+    if (verdict.verdict === 'rejected') expect(verdict.reason).toContain('на контрольных данных')
+  })
+
+  it('схема требует контрольную проверку для ожидаемо пустого результата', () => {
+    const kase = loadCaseFixture('01')
+    kase.steps.find(({ id }) => id === 's9')!.check.shadow = false
+    expect(() => parseCase(kase, '01.json')).toThrow('expect_empty требует')
+  })
+})
+
 describe('дело 00.json: попытка обмана хардкодом ловится', () => {
   // Берём последний шаг: его ответ — одна строка, и выписать её руками быстрее,
   // чем написать запрос. Там, где ответ в двадцать четыре строки, обман дороже
   // честного решения, поэтому shadow на первых шагах и не включён.
   it('ответ, верный на seed, но захардкоженный — отклоняется на shadow_seed', async () => {
-    const root = fileURLToPath(new URL('../..', import.meta.url))
-    const raw = JSON.parse(readFileSync(join(root, 'public', 'cases', '00.json'), 'utf8'))
-    const kase = parseCase(raw, '00.json')
+    const kase = loadCaseFixture('00')
     const step = kase.steps[kase.steps.length - 1]
     expect(step.check.shadow).toBe(true)
 

@@ -28,8 +28,7 @@ export const checkSchema = z.object({
     require: z.array(z.string()).default([]),
     forbid: z.array(z.string()).default([]),
     /**
-     * Шаг, где пустой ответ и есть ответ: иначе проверка дел считает пустой
-     * эталон поломкой — в остальных случаях это признак опечатки в solution.
+     * Эталон возвращает ноль строк на seed и хотя бы одну на shadow_seed.
      */
     expect_empty: z.boolean().default(false),
   })
@@ -99,6 +98,14 @@ export const caseSchema = z
           code: 'custom',
           message: 'шаг просит shadow-проверку, но в db нет shadow_seed',
           path: ['steps', i, 'check', 'shadow'],
+        })
+      }
+
+      if (step.check.expect_empty && (step.check.mode !== 'resultset' || !step.check.shadow)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'expect_empty требует режим resultset и включённую shadow-проверку',
+          path: ['steps', i, 'check', 'expect_empty'],
         })
       }
     })

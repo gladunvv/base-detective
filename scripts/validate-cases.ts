@@ -8,7 +8,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js'
 import { parseCase } from '../src/core/caseLoader.ts'
-import { openDb } from '../src/core/sqlite.ts'
+import { execLast, openDb } from '../src/core/sqlite.ts'
 import type { Case } from '../src/core/types.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -62,13 +62,17 @@ function checkTeaches(kase: Case, known: Map<string, string>): string[] {
 const cheatsheet = readCheatsheet()
 
 /** Возвращает список проблем; пустой список — дело в порядке. */
-function checkSolutions(db: Database, kase: Case, label: string): string[] {
+function checkSolutions(db: Database, kase: Case, label: 'seed' | 'shadow_seed'): string[] {
   const problems: string[] = []
   for (const step of kase.steps) {
     try {
-      const result = db.exec(step.solution)
-      const rows = result[0]?.values.length ?? 0
-      if (step.check.mode === 'resultset' && rows === 0 && !step.check.expect_empty) {
+      const rows = execLast(db, step.solution).rows.length
+      if (step.check.mode !== 'resultset') continue
+
+      const shouldBeEmpty = label === 'seed' && step.check.expect_empty
+      if (shouldBeEmpty && rows > 0) {
+        problems.push(`шаг ${step.id}: эталон на ${label} должен вернуть пустой результат`)
+      } else if (!shouldBeEmpty && rows === 0) {
         problems.push(`шаг ${step.id}: эталон на ${label} вернул пустой результат`)
       }
     } catch (error) {
