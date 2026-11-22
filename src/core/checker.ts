@@ -101,7 +101,7 @@ function compareByMode(check: Check, expected: SqlResult, actual: SqlResult): Co
 
 /**
  * Сравнение результата: сходиться должны число колонок и сами значения по
- * позициям. `NULL` и пустая строка считаются одним и тем же. Порядок строк
+ * позициям. `NULL` и пустая строка — разные значения. Порядок строк
  * учитывается только при `ordered: true`; порядок колонок — всегда, колонки
  * в SQL позиционные, а не именованные.
  *
@@ -129,14 +129,10 @@ function rowEquals(a: SqlValue[], b: SqlValue[]): boolean {
 }
 
 function valuesEqual(a: SqlValue, b: SqlValue): boolean {
-  // NULL и пустая строка — частая путаница новичков между "нет значения" и "пустая строка".
-  const normalize = (v: SqlValue): SqlValue => (v === null ? '' : v)
-  const na = normalize(a)
-  const nb = normalize(b)
-  if (na instanceof Uint8Array || nb instanceof Uint8Array) {
-    return na instanceof Uint8Array && nb instanceof Uint8Array && bytesEqual(na, nb)
+  if (a instanceof Uint8Array || b instanceof Uint8Array) {
+    return a instanceof Uint8Array && b instanceof Uint8Array && bytesEqual(a, b)
   }
-  return na === nb
+  return a === b
 }
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
@@ -145,7 +141,12 @@ function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
 
 function multisetEquals(expected: SqlValue[][], actual: SqlValue[][]): boolean {
   const key = (row: SqlValue[]): string =>
-    JSON.stringify(row.map((v) => (v === null ? '' : v instanceof Uint8Array ? Array.from(v) : v)))
+    JSON.stringify(row.map((value) => {
+      if (value instanceof Uint8Array) return Array.from(value)
+      // JSON сериализует бесконечность как null, хотя SQLite различает их.
+      if (typeof value === 'number' && !Number.isFinite(value)) return [String(value)]
+      return value
+    }))
 
   const counts = new Map<string, number>()
   for (const row of expected) {

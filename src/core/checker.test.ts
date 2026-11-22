@@ -169,8 +169,11 @@ describe('resultset', () => {
         'rejected',
       ],
       ['лишняя колонка с тем же значением', 'SELECT 1', 'SELECT 1, 1', 'rejected'],
-      // Фиксирует текущее поведение. Ожидание изменится в BD-03.
-      ['NULL и пустая строка', 'SELECT NULL', "SELECT ''", 'accepted'],
+      ['NULL и пустая строка', 'SELECT NULL', "SELECT ''", 'rejected'],
+      ['пустая строка и NULL', "SELECT ''", 'SELECT NULL', 'rejected'],
+      ['два NULL', 'SELECT NULL', 'SELECT NULL AS value', 'accepted'],
+      ['две пустые строки', "SELECT ''", "SELECT '' AS value", 'accepted'],
+      ['NULL и бесконечность SQLite', 'SELECT NULL', 'SELECT 1e999', 'rejected'],
     ] as const)('%s', async (_name, solution, playerSql, expected) => {
       const step = makeStep({ solution, check: { ordered } })
       const verdict = await checkAnswer({ step, playerSql, runOnMain: runOnMain() })
