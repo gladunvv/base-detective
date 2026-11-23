@@ -3,13 +3,13 @@
  * вешает вкладку без возможности что-то нажать, поэтому база живёт в воркере,
  * а здесь стоит таймаут и право этот воркер убить.
  */
-import type { RunOutcome, SqlResult } from './sqlite.ts'
+import type { RunOutcome, SqlPolicy, SqlResult } from './sqlite.ts'
 
 export type { SqlValue, SqlResult, RunOutcome } from './sqlite.ts'
 
 export type WorkerRequest =
   | { id: number; type: 'init'; schema: string; seed: string }
-  | { id: number; type: 'exec'; sql: string }
+  | { id: number; type: 'exec'; sql: string; policy: SqlPolicy }
 
 export type WorkerResponse =
   | { id: number; ok: true; result: SqlResult }
@@ -47,11 +47,11 @@ export class SqlRunner {
   }
 
   /** Выполняет запрос игрока. Не бросает: ошибка приходит в `RunOutcome`. */
-  exec(sql: string): Promise<RunOutcome> {
+  exec(sql: string, policy: SqlPolicy = 'read'): Promise<RunOutcome> {
     return this.#enqueue(async () => {
       const init = await this.#initIfNeeded()
       if (init && !init.ok) return init
-      return this.#request({ id: this.#nextId++, type: 'exec', sql })
+      return this.#request({ id: this.#nextId++, type: 'exec', sql, policy })
     })
   }
 

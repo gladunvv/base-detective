@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { checkAnswer, type CheckVerdict } from '../core/checker.ts'
 import { translateError } from '../core/errorDict.ts'
 import { SqlRunner } from '../core/sqlRunner.ts'
-import type { RunOutcome, SqlResult } from '../core/sqlite.ts'
+import type { RunOutcome, SqlPolicy, SqlResult } from '../core/sqlite.ts'
 import type { Case, Step } from '../core/types.ts'
 import { analytics } from './analytics.ts'
 import { fetchSchemaInfo, type SchemaInfo } from './schemaInfo.ts'
@@ -37,10 +37,10 @@ function saveHints(caseId: string, state: HintsState): void {
 
 /** Разовый исполнитель для проверки: своя свежая база на каждый вызов, воркер закрывается сразу после. */
 function makeFreshExecutor(schema: string, seed: string) {
-  return async (sql: string): Promise<RunOutcome> => {
+  return async (sql: string, policy: SqlPolicy): Promise<RunOutcome> => {
     const runner = new SqlRunner({ schema, seed })
     try {
-      return await runner.exec(sql)
+      return await runner.exec(sql, policy)
     } finally {
       runner.dispose()
     }
@@ -98,7 +98,7 @@ export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
     if (!step || busy || rejected) return
 
     setBusy(true)
-    const live = await runner.exec(sql)
+    const live = await runner.exec(sql, step.check.mode === 'rowcount' ? 'write' : 'read')
     if (!live.ok) {
       setOutcome({ kind: 'error', message: translateError(live.error, step.errors) })
       analytics.queryFailed(kase.id, step.id)

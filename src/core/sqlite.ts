@@ -14,6 +14,36 @@ export type SqlResult = {
 
 export type RunOutcome = { ok: true; result: SqlResult } | { ok: false; error: string }
 
+export type SqlPolicy = 'read' | 'write'
+
+export const READ_ONLY_QUERY_ERROR = 'В этом шаге можно выполнить один запрос SELECT, в том числе с WITH.'
+
+// SQLite пропускает разделители, пробелы и комментарии по краям инструкции.
+const LEADING_SQL_TRIVIA = /^(?:[ \t\n\v\f\r;\uFEFF]|--[^\n]*|\/\*[\s\S]*?(?:\*\/|$))*/
+
+export function execReadOnly(db: Database, sql: string): SqlResult {
+  const query = sql.replace(LEADING_SQL_TRIVIA, '')
+  if (!/^(?:SELECT|WITH)\b/i.test(query)) throw new Error(READ_ONLY_QUERY_ERROR)
+
+  const wasReadOnly = db.exec('PRAGMA query_only')[0]?.values[0]?.[0] === 1
+  if (!wasReadOnly) db.run('PRAGMA query_only = ON')
+  try {
+    const statement = db.prepare(query)
+    try {
+      const tail = query.slice(statement.getSQL().length)
+      if (tail.replace(LEADING_SQL_TRIVIA, '') !== '') throw new Error(READ_ONLY_QUERY_ERROR)
+
+      const rows: SqlValue[][] = []
+      while (statement.step()) rows.push(statement.get())
+      return { columns: rows.length ? statement.getColumnNames() : [], rows }
+    } finally {
+      statement.free()
+    }
+  } finally {
+    if (!wasReadOnly) db.run('PRAGMA query_only = OFF')
+  }
+}
+
 /** Собирает базу из `schema` + `seed`. */
 export function openDb(SQL: SqlJsStatic, schema: string, seed: string): Database {
   const db = new SQL.Database()

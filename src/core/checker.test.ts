@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import initSqlJs, { type SqlJsStatic } from 'sql.js'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { checkAnswer, type FreshExecutor } from './checker.ts'
-import { execLast, openDb } from './sqlite.ts'
+import { execLast, execReadOnly, openDb, READ_ONLY_QUERY_ERROR } from './sqlite.ts'
 import { parseCase } from './caseLoader.ts'
 import type { Case, Check, Step } from './types.ts'
 
@@ -17,11 +17,12 @@ beforeAll(async () => {
 
 /** Executor «как в проде»: свежая база на каждый вызов, никакого общего состояния между ними. */
 function executorFor(schema: string, seed: string): FreshExecutor {
-  return (sql) =>
+  return (sql, policy) =>
     Promise.resolve().then(() => {
       const db = openDb(SQL, schema, seed)
       try {
-        return { ok: true as const, result: execLast(db, sql) }
+        const execute = policy === 'read' ? execReadOnly : execLast
+        return { ok: true as const, result: execute(db, sql) }
       } catch (error) {
         return { ok: false as const, error: (error as Error).message }
       } finally {
@@ -74,6 +75,36 @@ function loadCaseFixture(id: string): Case {
 
 describe('resultset', () => {
   const runOnMain = () => executorFor(suspectsSchema, suspectsSeed)
+
+  it.each([
+    'WITH names AS (SELECT name FROM suspects) SELECT name FROM names;',
+    '; -- комментарий\n /* SELECT ; */ select name FROM suspects; /* конец */ ;',
+  ])('принимает один читающий запрос: %s', async (playerSql) => {
+    const step = makeStep({ solution: 'SELECT name FROM suspects', check: {} })
+    const verdict = await checkAnswer({ step, playerSql, runOnMain: runOnMain() })
+    expect(verdict).toEqual({ verdict: 'accepted' })
+  })
+
+  it.each([
+    'SELECT name FROM suspects; SELECT name FROM suspects',
+    "UPDATE suspects SET name = 'Анна' WHERE id = 1",
+    "WITH target AS (SELECT 1) UPDATE suspects SET name = 'Анна' WHERE id IN (SELECT * FROM target)",
+  ])('отклоняет запрос вне политики чтения: %s', async (playerSql) => {
+    const step = makeStep({ solution: 'SELECT name FROM suspects', check: {} })
+    const verdict = await checkAnswer({ step, playerSql, runOnMain: runOnMain() })
+    expect(verdict).toEqual({ verdict: 'error', error: READ_ONLY_QUERY_ERROR })
+  })
+
+  it('сохраняет точки с запятой внутри значений и поддерживает просмотр схемы', () => {
+    const db = openDb(SQL, suspectsSchema, suspectsSeed)
+    try {
+      expect(execReadOnly(db, "SELECT 'улика;фото' AS note;").rows).toEqual([['улика;фото']])
+      expect(execReadOnly(db, "SELECT name FROM pragma_table_info('suspects')").rows)
+        .toEqual([['id'], ['name'], ['job']])
+    } finally {
+      db.close()
+    }
+  })
 
   it('засчитывает правильный ответ', async () => {
     const step = makeStep({ solution: 'SELECT name FROM suspects', check: {} })

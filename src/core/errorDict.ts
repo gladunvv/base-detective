@@ -7,6 +7,7 @@
  * словарь — так и просит роадмапа. Формат у них проще (`match`/`say` —
  * обе строки, без групп захвата): их пишет автор дела в JSON, а не программист.
  */
+import { READ_ONLY_QUERY_ERROR } from './sqlite.ts'
 import type { ErrorRule } from './types.ts'
 
 type DictRule = { match: RegExp; say: (m: RegExpMatchArray) => string }
@@ -53,6 +54,9 @@ const FALLBACK = 'Запрос не выполнился. Проверьте с�
 
 /** Переводит сырое сообщение SQLite. Ничего не находит — отдаёт общий, но не сырой текст. */
 export function translateError(rawMessage: string, stepRules: ErrorRule[] = []): string {
+  if (rawMessage === READ_ONLY_QUERY_ERROR || rawMessage === 'attempt to write a readonly database') {
+    return READ_ONLY_QUERY_ERROR
+  }
   for (const rule of stepRules) {
     if (new RegExp(rule.match, 'i').test(rawMessage)) return rule.say
   }

@@ -7,7 +7,7 @@
  * прогнать обоих ровно на одинаковых стартовых данных.
  */
 import { translateError } from './errorDict.ts'
-import type { RunOutcome, SqlResult, SqlValue } from './sqlite.ts'
+import type { RunOutcome, SqlPolicy, SqlResult, SqlValue } from './sqlite.ts'
 import type { Check, ErrorRule, Step } from './types.ts'
 
 export type CheckVerdict =
@@ -16,7 +16,7 @@ export type CheckVerdict =
   | { verdict: 'error'; error: string }
 
 /** Выполняет `sql` на свежей базе (schema + seed) и возвращает результат или ошибку. */
-export type FreshExecutor = (sql: string) => Promise<RunOutcome>
+export type FreshExecutor = (sql: string, policy: SqlPolicy) => Promise<RunOutcome>
 
 type CheckParams = {
   step: Step
@@ -60,12 +60,13 @@ async function runBoth(
   stepErrors: ErrorRule[],
   run: FreshExecutor,
 ): Promise<CheckVerdict> {
-  const player = await run(buildQuery(check, playerSql))
+  const policy = check.mode === 'rowcount' ? 'write' : 'read'
+  const player = await run(buildQuery(check, playerSql), policy)
   // Ошибка игрока — единственная, которую переводим: она дойдёт до экрана.
   // Ошибка эталона ниже — сигнал о поломке самого дела, её нарочно не переводим.
   if (!player.ok) return { verdict: 'error', error: translateError(player.error, stepErrors) }
 
-  const solution = await run(buildQuery(check, solutionSql))
+  const solution = await run(buildQuery(check, solutionSql), policy)
   if (!solution.ok) {
     return { verdict: 'error', error: `внутренняя ошибка дела: эталон не выполнился (${solution.error})` }
   }
