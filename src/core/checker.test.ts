@@ -416,16 +416,14 @@ describe('дело 01.json: поиск слова в описании без с�
 })
 
 describe('дело 00.json: попытка обмана хардкодом ловится', () => {
-  // Берём последний шаг: его ответ — одна строка, и выписать её руками быстрее,
-  // чем написать запрос. Там, где ответ в двадцать четыре строки, обман дороже
-  // честного решения, поэтому shadow на первых шагах и не включён.
+  // Шаг с LIMIT возвращает одну строку, которую легко выписать из основной базы.
   it('ответ, верный на seed, но захардкоженный — отклоняется на shadow_seed', async () => {
     const kase = loadCaseFixture('00')
-    const step = kase.steps[kase.steps.length - 1]
+    const step = kase.steps.find(({ id }) => id === 's6')!
     expect(step.check.shadow).toBe(true)
 
     // Ровно та строка, которую отдаёт эталон на основной базе, — но не запрос, а список значений.
-    const playerSql = "SELECT 11 AS room, 'Паша Горелик' AS name, 1904 AS gigabytes"
+    const playerSql = "SELECT 11 AS room, 'Паша Горелик' AS name, 1904 AS gigabytes, 1800 AS upload_gb"
 
     const withoutShadow = await checkAnswer({
       step: { ...step, check: { ...step.check, shadow: false } },
