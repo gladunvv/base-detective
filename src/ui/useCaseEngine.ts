@@ -3,6 +3,7 @@ import { checkAnswer, type CheckVerdict } from '../core/checker.ts'
 import { translateError } from '../core/errorDict.ts'
 import { SqlRunner } from '../core/sqlRunner.ts'
 import type { RunOutcome, SqlPolicy, SqlResult } from '../core/sqlite.ts'
+import { caseHintsKey } from '../core/storage.ts'
 import type { Case, Step } from '../core/types.ts'
 import { analytics } from './analytics.ts'
 import { fetchSchemaInfo, type SchemaInfo } from './schemaInfo.ts'
@@ -14,22 +15,18 @@ export type Outcome =
 
 type HintsState = Record<string, number>
 
-function hintsKey(caseId: string): string {
-  return `bd:hints:${caseId}`
-}
-
-function loadHints(caseId: string): HintsState {
+function loadHints(key: string): HintsState {
   try {
-    const raw = localStorage.getItem(hintsKey(caseId))
+    const raw = localStorage.getItem(key)
     return raw ? (JSON.parse(raw) as HintsState) : {}
   } catch {
     return {}
   }
 }
 
-function saveHints(caseId: string, state: HintsState): void {
+function saveHints(key: string, state: HintsState): void {
   try {
-    localStorage.setItem(hintsKey(caseId), JSON.stringify(state))
+    localStorage.setItem(key, JSON.stringify(state))
   } catch {
     // приватный режим браузера или переполненная квота — подсказки просто не переживут перезагрузку
   }
@@ -63,15 +60,13 @@ export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
 
   const [schema, setSchema] = useState<SchemaInfo>({})
   // Хранилище движку не передаётся: он знает только число и колбэк, как и с onFinished.
-  // Чужой шаг (дело переписали, шагов стало меньше) молча прижимается к последнему.
-  const [stepIndex, setStepIndex] = useState(() =>
-    Math.min(Math.max(options.initialStep ?? 0, 0), kase.steps.length - 1),
-  )
+  const [stepIndex, setStepIndex] = useState(() => options.initialStep ?? 0)
   const [sql, setSql] = useState('')
   const [outcome, setOutcome] = useState<Outcome | null>(null)
   const [busy, setBusy] = useState(false)
   const [verdict, setVerdict] = useState<CheckVerdict | null>(null)
-  const [hints, setHints] = useState<HintsState>(() => loadHints(kase.id))
+  const hintsKey = caseHintsKey(kase.id, kase.progress_revision)
+  const [hints, setHints] = useState<HintsState>(() => loadHints(hintsKey))
   const [finished, setFinished] = useState(false)
 
   const step: Step | undefined = kase.steps[stepIndex]
@@ -135,7 +130,7 @@ export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
     setVerdict(null)
     const next = { ...hints, [step.id]: 0 }
     setHints(next)
-    saveHints(kase.id, next)
+    saveHints(hintsKey, next)
   }
 
   async function resetDatabase(): Promise<void> {
@@ -174,7 +169,7 @@ export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
 
     const next = { ...hints, [step.id]: current + 1 }
     setHints(next)
-    saveHints(kase.id, next)
+    saveHints(hintsKey, next)
     analytics.hintRevealed(kase.id, step.id, current + 1)
   }
 

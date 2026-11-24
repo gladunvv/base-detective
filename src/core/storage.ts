@@ -10,16 +10,18 @@
  * (контракт закреплён в types.ts ещё в фазе 1).
  */
 
+type SavedStep = number | { index: number; revision: number }
+
 export type Progress = {
   /** id пройденных дел, в порядке прохождения, без повторов. */
   completed: string[]
   /**
-   * На каком шаге игрок остановился в каждом незакрытом деле: id дела → номер шага.
+   * Позиция внутри дела вместе с редакцией. Старые числовые записи относятся к редакции 1.
    * Лежит здесь, а не отдельным ключом, как подсказки: это именно прогресс, и когда
    * он переедет на HTTP, место в деле должно переехать вместе с пройденными делами —
    * иначе человек, сменивший устройство, потеряет середину двенадцатишагового дела.
    */
-  step: Record<string, number>
+  step: Record<string, SavedStep>
   /**
    * Конструкции, до которых игрок дошёл: id записей шпаргалки. Копятся здесь,
    * а не вычисляются из дел, потому что иначе для одного вопроса «открыт ли
@@ -36,6 +38,21 @@ export interface StorageBackend {
 
 const KEY = 'bd:progress'
 const FIRST_CASE_ID = '00'
+
+function isStepIndex(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
+}
+
+function isSavedStep(value: unknown): value is SavedStep {
+  if (isStepIndex(value)) return true
+  return typeof value === 'object' && value !== null &&
+    'index' in value && isStepIndex(value.index) &&
+    'revision' in value && isStepIndex(value.revision) && value.revision > 0
+}
+
+export function caseHintsKey(id: string, revision: number): string {
+  return revision === 1 ? `bd:hints:${id}` : `bd:hints:${id}:v${revision}`
+}
 
 function isEmptyProgress(raw: string | null): raw is null {
   return raw === null
@@ -58,7 +75,7 @@ function read(backend: StorageBackend): Progress {
       return {
         completed: (saved.completed ?? []).filter((id) => typeof id === 'string'),
         step: Object.fromEntries(
-          Object.entries(step).filter(([, value]) => typeof value === 'number' && value >= 0),
+          Object.entries(step).filter(([, value]) => isSavedStep(value)),
         ),
         learned: Array.isArray(saved.learned) ? saved.learned.filter((id) => typeof id === 'string') : [],
       }
@@ -98,9 +115,19 @@ export function createStorage(backend: StorageBackend) {
       write(backend, { ...progress, completed: [...progress.completed, id], step })
     },
 
-    /** Шаг, на котором игрок остановился. Ноль — дело ещё не начато. */
-    getStep(id: string): number {
-      return read(backend).step[id] ?? 0
+    resumeCase(id: string, revision: number, stepCount: number): { index: number; restarted: boolean } {
+      const progress = read(backend)
+      const saved = progress.step[id]
+      if (saved === undefined) return { index: 0, restarted: false }
+
+      const index = typeof saved === 'number' ? saved : saved.index
+      const savedRevision = typeof saved === 'number' ? 1 : saved.revision
+      if (savedRevision === revision && index < stepCount) return { index, restarted: false }
+
+      delete progress.step[id]
+      write(backend, progress)
+      backend.removeItem(caseHintsKey(id, savedRevision))
+      return { index: 0, restarted: true }
     },
 
     /** Конструкции, открытые в шпаргалке. */
@@ -122,9 +149,9 @@ export function createStorage(backend: StorageBackend) {
       return learned
     },
 
-    setStep(id: string, index: number): void {
+    setStep(id: string, index: number, revision: number): void {
       const progress = read(backend)
-      write(backend, { ...progress, step: { ...progress.step, [id]: index } })
+      write(backend, { ...progress, step: { ...progress.step, [id]: { index, revision } } })
     },
 
     resetProgress(): void {

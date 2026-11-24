@@ -11,7 +11,7 @@ type LoadState =
   | { status: 'loading' }
   | { status: 'missing' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; kase: Case }
+  | { status: 'ready'; kase: Case; resume: ReturnType<ProgressStore['resumeCase']> }
 
 /**
  * `id` — снаружи (см. `CaseRoute` в App.tsx), с `key={id}`: при переходе между
@@ -28,12 +28,18 @@ export function CasePage({ id, storage }: { id: string; storage: ProgressStore }
   }, [storage])
 
   useEffect(() => {
+    let active = true
     loadCase(id)
       .then((kase) => {
-        setState({ status: 'ready', kase })
+        if (!active) return
+        const resume = storage.isUnlocked(id)
+          ? storage.resumeCase(id, kase.progress_revision, kase.steps.length)
+          : { index: 0, restarted: false }
+        setState({ status: 'ready', kase, resume })
         analytics.caseOpened(kase.id)
       })
       .catch((error: unknown) => {
+        if (!active) return
         if (error instanceof CaseLoadError && error.notFound) {
           setState({ status: 'missing' })
           return
@@ -41,7 +47,8 @@ export function CasePage({ id, storage }: { id: string; storage: ProgressStore }
         const message = error instanceof CaseLoadError ? error.message : String(error)
         setState({ status: 'error', message })
       })
-  }, [id])
+    return () => { active = false }
+  }, [id, storage])
 
   // Попытка зайти в дело раньше очереди — редирект в список, без объяснений
   // на этом экране: объяснение и так на месте, в виде перевязанной папки.
@@ -72,8 +79,9 @@ export function CasePage({ id, storage }: { id: string; storage: ProgressStore }
   return (
     <CaseView
       kase={state.kase}
-      initialStep={storage.getStep(id)}
-      onStepChange={(index) => storage.setStep(id, index)}
+      initialStep={state.resume.index}
+      restarted={state.resume.restarted}
+      onStepChange={(index) => storage.setStep(id, index, state.kase.progress_revision)}
       onReach={handleReach}
       learned={learned}
       onFinished={() => storage.completeCase(id)}

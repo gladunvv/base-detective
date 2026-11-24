@@ -9,6 +9,7 @@ import type { useCaseEngine } from './useCaseEngine.ts'
 type CasePanelProps = {
   kase: Case
   engine: ReturnType<typeof useCaseEngine>
+  restarted: boolean
 }
 
 /**
@@ -16,7 +17,7 @@ type CasePanelProps = {
  * бьёт штамп «Принято»/«Отказано» — по дизайн-документу штамп ложится на лист,
  * а не на монитор.
  */
-export function CasePanel({ kase, engine }: CasePanelProps) {
+export function CasePanel({ kase, engine, restarted }: CasePanelProps) {
   const {
     step,
     stepNumber,
@@ -52,6 +53,12 @@ export function CasePanel({ kase, engine }: CasePanelProps) {
         <h1 className="text-xl font-bold">{kase.title}</h1>
         <StepDots current={Math.min(stepNumber, totalSteps)} total={totalSteps} finished={finished} />
       </header>
+
+      {restarted && !finished && stepNumber === 1 && (
+        <p role="status" className="rounded bg-paper p-3 font-sans text-sm">
+          Это дело обновилось. Начните с первого шага.
+        </p>
+      )}
 
       <Markdown text={kase.intro} className="font-sans text-sm leading-relaxed" />
 

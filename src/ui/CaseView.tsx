@@ -14,6 +14,7 @@ export function CaseView({
   kase,
   onFinished,
   initialStep,
+  restarted,
   onStepChange,
   onReach,
   learned,
@@ -21,6 +22,7 @@ export function CaseView({
   kase: Case
   onFinished?: () => void
   initialStep?: number
+  restarted: boolean
   onStepChange?: (index: number) => void
   onReach?: (teaches: string[]) => void
   /** Конструкции, открытые в шпаргалке. */
@@ -31,7 +33,7 @@ export function CaseView({
   return (
     <div className="flex min-h-dvh flex-col md:h-dvh md:flex-row md:overflow-hidden">
       <div className="md:h-full md:w-[40%]">
-        <CasePanel kase={kase} engine={engine} />
+        <CasePanel kase={kase} engine={engine} restarted={restarted} />
       </div>
 
       <div className="hidden md:flex md:h-full md:flex-1">

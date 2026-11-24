@@ -69,6 +69,7 @@ export const dbSchema = z.object({
 export const caseSchema = z
   .object({
     format_version: z.literal(1),
+    progress_revision: z.number().int().positive().default(1),
     id: z.string().regex(/^\d{2}$/, 'ожидается две цифры, например "00"'),
     title: z.string().min(1),
     topic: z.string().min(1),
