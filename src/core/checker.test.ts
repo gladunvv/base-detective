@@ -397,7 +397,7 @@ describe('дело 01.json: поиск слова в описании без с�
     ['запрос с условием, которое всегда ложно', 'SELECT category, route, description FROM finds WHERE 1=0', 'rejected'],
   ] as const)('%s', async (_name, playerSql, expected) => {
     const { db, steps } = loadCaseFixture('01')
-    const step = steps.find(({ id }) => id === 's9')!
+    const step = steps.find(({ id }) => id === 's6')!
     const verdict = await checkAnswer({
       step,
       playerSql,
@@ -410,7 +410,7 @@ describe('дело 01.json: поиск слова в описании без с�
 
   it('схема требует контрольную проверку для ожидаемо пустого результата', () => {
     const kase = loadCaseFixture('01')
-    kase.steps.find(({ id }) => id === 's9')!.check.shadow = false
+    kase.steps.find(({ id }) => id === 's6')!.check.shadow = false
     expect(() => parseCase(kase, '01.json')).toThrow('expect_empty требует')
   })
 })
