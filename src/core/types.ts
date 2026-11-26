@@ -33,6 +33,23 @@ export const checkSchema = z.object({
     expect_empty: z.boolean().default(false),
   })
 
+const caseText = z.string().trim().min(1)
+const evidenceSchema = z.object({
+  id: caseText,
+  /** Короткий факт, который игрок получает после зачёта этого шага. */
+  text: caseText,
+})
+
+const resolutionSchema = z.object({
+  prompt: caseText,
+  options: z.array(z.object({ id: caseText, text: caseText })).min(2),
+  /** Эталон проверки. В интерфейсе показываются вопрос, варианты и открытые улики. */
+  answer: z.object({
+    option_id: caseText,
+    evidence_ids: z.array(caseText).min(1),
+  }),
+})
+
 export const stepSchema = z.object({
   id: z.string().min(1),
   brief: z.string().min(1),
@@ -52,6 +69,7 @@ export const stepSchema = z.object({
    * только игрок до такого шага дошёл, и подписывается на экране дела.
    */
   teaches: z.array(z.string()).default([]),
+  evidence: z.array(evidenceSchema).default([]),
 })
 
 export const dbSchema = z.object({
@@ -76,6 +94,7 @@ export const caseSchema = z
     db: dbSchema,
     intro: z.string().default(''),
     steps: z.array(stepSchema).min(1),
+    resolution: resolutionSchema.optional(),
     epilogue: z.string().default(''),
     /** Путь под public/, обложка карточки в списке дел. Без неё карточка просто без картинки. */
     cover_image: z.string().optional(),
@@ -84,6 +103,7 @@ export const caseSchema = z
   })
   .superRefine((c, ctx) => {
     const seen = new Set<string>()
+    const evidenceIds = new Set<string>()
     c.steps.forEach((step, i) => {
       if (seen.has(step.id)) {
         ctx.addIssue({
@@ -93,6 +113,17 @@ export const caseSchema = z
         })
       }
       seen.add(step.id)
+
+      step.evidence.forEach(({ id }, j) => {
+        if (evidenceIds.has(id)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: `id улики "${id}" уже занят`,
+            path: ['steps', i, 'evidence', j, 'id'],
+          })
+        }
+        evidenceIds.add(id)
+      })
 
       if (step.check.shadow && c.db.shadow_seed === undefined) {
         ctx.addIssue({
@@ -109,6 +140,40 @@ export const caseSchema = z
           path: ['steps', i, 'check', 'expect_empty'],
         })
       }
+    })
+
+    const resolution = c.resolution
+    if (!resolution) return
+
+    const optionIds = new Set<string>()
+    resolution.options.forEach(({ id }, i) => {
+      if (optionIds.has(id)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `id версии "${id}" уже занят`,
+          path: ['resolution', 'options', i, 'id'],
+        })
+      }
+      optionIds.add(id)
+    })
+
+    if (!optionIds.has(resolution.answer.option_id)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'такой версии нет в вариантах ответа',
+        path: ['resolution', 'answer', 'option_id'],
+      })
+    }
+
+    const cited = new Set<string>()
+    resolution.answer.evidence_ids.forEach((id, i) => {
+      const path = ['resolution', 'answer', 'evidence_ids', i]
+      if (!evidenceIds.has(id)) {
+        ctx.addIssue({ code: 'custom', message: `улика "${id}" не найдена`, path })
+      } else if (cited.has(id)) {
+        ctx.addIssue({ code: 'custom', message: `улика "${id}" указана повторно`, path })
+      }
+      cited.add(id)
     })
   })
 
