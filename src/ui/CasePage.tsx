@@ -33,7 +33,7 @@ export function CasePage({ id, storage }: { id: string; storage: ProgressStore }
       .then((kase) => {
         if (!active) return
         const resume = storage.isUnlocked(id)
-          ? storage.resumeCase(id, kase.progress_revision, kase.steps.length)
+          ? storage.resumeCase(id, kase.progress_revision, kase.steps.length + Number(Boolean(kase.resolution)))
           : { index: 0, restarted: false }
         setState({ status: 'ready', kase, resume })
         analytics.caseOpened(kase.id)

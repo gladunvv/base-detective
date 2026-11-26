@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { checkAnswer, type CheckVerdict } from '../core/checker.ts'
+import { checkResolution } from '../core/resolution.ts'
 import { translateError } from '../core/errorDict.ts'
 import { SqlRunner } from '../core/sqlRunner.ts'
 import type { RunOutcome, SqlPolicy, SqlResult } from '../core/sqlite.ts'
@@ -68,6 +69,8 @@ export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
   const hintsKey = caseHintsKey(kase.id, kase.progress_revision)
   const [hints, setHints] = useState<HintsState>(() => loadHints(hintsKey))
   const [finished, setFinished] = useState(false)
+  const [resolutionFeedback, setResolutionFeedback] = useState<string | null>(null)
+  const resolving = !finished && stepIndex === kase.steps.length && kase.resolution !== undefined
 
   const step: Step | undefined = kase.steps[stepIndex]
   const accepted = verdict?.verdict === 'accepted'
@@ -138,23 +141,39 @@ export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
     setOutcome(null)
   }
 
+  function finish(): void {
+    setFinished(true)
+    analytics.caseFinished(kase.id)
+    options.onFinished?.()
+  }
+
+  function submitResolution(optionId: string, evidenceIds: string[]): void {
+    if (!resolving || !kase.resolution) return
+    const result = checkResolution(kase.resolution.answer, optionId, evidenceIds)
+    if (result === 'accepted') {
+      finish()
+      return
+    }
+    setResolutionFeedback(result === 'wrong-version'
+      ? 'Эта версия не объясняет находки. Сверьте её с уликами и попробуйте ещё раз.'
+      : 'Проверьте набор улик. Отметьте все факты, которые прямо подтверждают версию.')
+  }
+
   function advance(): void {
     if (!accepted) return
     const next = stepIndex + 1
     setSql('')
     setOutcome(null)
     setVerdict(null)
-    if (next >= kase.steps.length) {
-      setFinished(true)
-      analytics.caseFinished(kase.id)
-      options.onFinished?.()
+    if (next === kase.steps.length && !kase.resolution) {
+      finish()
       return
     }
     setStepIndex(next)
     options.onStepChange?.(next)
     // При persist_between_steps: false каждый шаг начинается с чистой базы —
     // иначе игрок унёс бы в новый шаг мутации, сделанные при исследовании прошлого.
-    if (!kase.db.persist_between_steps) {
+    if (next < kase.steps.length && !kase.db.persist_between_steps) {
       void runner.reset()
     }
   }
@@ -180,6 +199,9 @@ export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
     /** id конструкций текущего шага — для подписи на экране и для шпаргалки. */
     stepTeaches: step?.teaches ?? [],
     finished,
+    resolving,
+    resolutionFeedback,
+    submitResolution,
     schema,
     sql,
     setSql,

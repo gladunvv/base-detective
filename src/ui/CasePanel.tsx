@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { Link } from 'react-router'
 import type { Case } from '../core/types.ts'
+import { CaseResolution } from './CaseResolution.tsx'
 import { useCheatsheet, titlesFor } from './cheatsheet.ts'
 import { Hints } from './Hints.tsx'
 import { Markdown } from './markdown.tsx'
@@ -24,6 +25,9 @@ export function CasePanel({ kase, engine, restarted }: CasePanelProps) {
     totalSteps,
     stepTeaches,
     finished,
+    resolving,
+    resolutionFeedback,
+    submitResolution,
     verdict,
     accepted,
     hintsRevealed,
@@ -51,7 +55,7 @@ export function CasePanel({ kase, engine, restarted }: CasePanelProps) {
           )}
         </p>
         <h1 className="text-xl font-bold">{kase.title}</h1>
-        <StepDots current={Math.min(stepNumber, totalSteps)} total={totalSteps} finished={finished} />
+        <StepDots current={Math.min(stepNumber, totalSteps)} total={totalSteps} finished={finished} resolving={resolving} />
       </header>
 
       {restarted && !finished && stepNumber === 1 && (
@@ -73,6 +77,15 @@ export function CasePanel({ kase, engine, restarted }: CasePanelProps) {
             />
           )}
         </section>
+      ) : resolving && kase.resolution ? (
+        <CaseResolution
+          resolution={kase.resolution}
+          evidence={kase.steps.flatMap((item, index) =>
+            item.evidence.map((card) => ({ ...card, stepNumber: index + 1 })),
+          )}
+          feedback={resolutionFeedback}
+          onSubmit={submitResolution}
+        />
       ) : step ? (
         <section className="flex flex-col gap-4 rounded bg-paper p-4">
           <div>
@@ -121,7 +134,7 @@ export function CasePanel({ kase, engine, restarted }: CasePanelProps) {
                 onClick={advance}
                 className="self-start rounded bg-ink px-3 py-1 font-sans text-sm text-paper"
               >
-                {stepNumber < totalSteps ? 'Далее' : 'Закрыть дело'}
+                {stepNumber < totalSteps ? 'Далее' : kase.resolution ? 'Выбрать версию' : 'Закрыть дело'}
               </button>
             </div>
           )}
@@ -141,13 +154,21 @@ export function CasePanel({ kase, engine, restarted }: CasePanelProps) {
  * Кружки не кликабельны: движок не умеет открывать произвольный шаг, и прыжок
  * вперёд ломал бы проверку.
  */
-function StepDots({ current, total, finished }: { current: number; total: number; finished: boolean }) {
-  const done = finished ? total : current - 1
+function StepDots({ current, total, finished, resolving }: {
+  current: number
+  total: number
+  finished: boolean
+  resolving: boolean
+}) {
+  const done = finished || resolving ? total : current - 1
+  const label = finished
+    ? `Дело закрыто, шагов: ${total}`
+    : resolving ? `Все ${total} шагов пройдены. Выберите версию` : `Шаг ${current} из ${total}`
   return (
     <div
       className="mt-2 flex items-center"
       role="img"
-      aria-label={finished ? `Дело закрыто, шагов: ${total}` : `Шаг ${current} из ${total}`}
+      aria-label={label}
     >
       {Array.from({ length: total }, (_, i) => (
         <Fragment key={i}>
