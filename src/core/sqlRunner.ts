@@ -24,6 +24,7 @@ const TIMEOUT_MESSAGE =
   'Запрос слишком тяжёлый и был остановлен. Скорее всего, таблицы соединились без условия.'
 
 const TIMEOUT_MS = 5000
+const RESET_MESSAGE = 'База пересоздана, предыдущий запрос отменён.'
 
 const EMPTY_RESULT: SqlResult = { columns: [], rows: [] }
 
@@ -41,6 +42,7 @@ export class SqlRunner {
   /** Запросы идут по одному: убийство воркера по таймауту рвёт всё разом. */
   #chain: Promise<unknown> = Promise.resolve()
   #disposed = false
+  #generation = 0
 
   constructor(db: RunnerDb) {
     this.#db = db
@@ -57,7 +59,8 @@ export class SqlRunner {
 
   /** Пересоздаёт базу из `schema` и `seed`, теряя всё, что игрок успел в неё записать. */
   reset(): Promise<RunOutcome> {
-    this.#kill({ ok: false, error: 'База пересоздана, предыдущий запрос отменён.' })
+    this.#generation++
+    this.#kill({ ok: false, error: RESET_MESSAGE })
     return this.#enqueue(async () => (await this.#initIfNeeded()) ?? { ok: true, result: EMPTY_RESULT })
   }
 
@@ -69,13 +72,17 @@ export class SqlRunner {
   /** Воркер и база живут ровно столько, сколько открыто дело. */
   dispose(): void {
     this.#disposed = true
+    this.#generation++
     this.#kill({ ok: false, error: 'Движок базы остановлен.' })
   }
 
   #enqueue(task: () => Promise<RunOutcome>): Promise<RunOutcome> {
-    const outcome = this.#chain.then(() =>
-      this.#disposed ? { ok: false as const, error: 'Движок базы уже остановлен.' } : task(),
-    )
+    const generation = this.#generation
+    const outcome = this.#chain.then(() => {
+      if (this.#disposed) return { ok: false as const, error: 'Движок базы уже остановлен.' }
+      if (generation !== this.#generation) return { ok: false as const, error: RESET_MESSAGE }
+      return task()
+    })
     this.#chain = outcome.catch(() => {})
     return outcome
   }
@@ -83,12 +90,16 @@ export class SqlRunner {
   /** `null`, если база уже поднята. Воркер создаётся лениво — в том числе заново после таймаута. */
   #initIfNeeded(): Promise<RunOutcome> | null {
     if (this.#worker) return null
-    this.#worker = this.#createWorker()
+    const worker = this.#createWorker()
+    this.#worker = worker
     return this.#request({
       id: this.#nextId++,
       type: 'init',
       schema: this.#db.schema,
       seed: this.#db.seed,
+    }).then((outcome) => {
+      if (!outcome.ok && this.#worker === worker) this.#kill(outcome)
+      return outcome
     })
   }
 
@@ -104,7 +115,9 @@ export class SqlRunner {
       )
     }
     worker.onerror = (event) => {
-      this.#kill({ ok: false, error: `Движок базы не запустился: ${event.message}` })
+      if (this.#worker === worker) {
+        this.#kill({ ok: false, error: `Движок базы не запустился: ${event.message}` })
+      }
     }
     return worker
   }

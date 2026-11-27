@@ -2,7 +2,7 @@
  * Проверка ответа игрока. Ноль React, ноль знания о воркерах — только SQL-текст
  * и функция, которая умеет выполнить запрос на свежей базе и вернуть результат.
  * Игрок и эталон всегда прогоняются на СВОЕЙ копии базы: делить одно соединение
- * между ними нельзя — для rowcount и schema это дало бы неверную картину
+ * между ними нельзя — для rowcount это дало бы неверную картину
  * (второй запрос видел бы изменения первого), а для shadow смысл в том, чтобы
  * прогнать обоих ровно на одинаковых стартовых данных.
  */
@@ -61,28 +61,18 @@ async function runBoth(
   run: FreshExecutor,
 ): Promise<CheckVerdict> {
   const policy = check.mode === 'rowcount' ? 'write' : 'read'
-  const player = await run(buildQuery(check, playerSql), policy)
+  const player = await run(playerSql, policy)
   // Ошибка игрока — единственная, которую переводим: она дойдёт до экрана.
   // Ошибка эталона ниже — сигнал о поломке самого дела, её нарочно не переводим.
   if (!player.ok) return { verdict: 'error', error: translateError(player.error, stepErrors) }
 
-  const solution = await run(buildQuery(check, solutionSql), policy)
+  const solution = await run(solutionSql, policy)
   if (!solution.ok) {
     return { verdict: 'error', error: `внутренняя ошибка дела: эталон не выполнился (${solution.error})` }
   }
 
   const comparison = compareByMode(check, solution.result, player.result)
   return comparison.ok ? { verdict: 'accepted' } : { verdict: 'rejected', reason: comparison.reason }
-}
-
-/** Достраивает запрос так, чтобы результат содержал то, что нужно сравнить для данного режима. */
-function buildQuery(check: Check, sql: string): string {
-  switch (check.mode) {
-    case 'resultset':
-      return sql
-    case 'rowcount':
-      return `${sql};\nSELECT changes() AS n`
-  }
 }
 
 type Comparison = { ok: true } | { ok: false; reason: string }
@@ -166,8 +156,11 @@ function multisetEquals(expected: SqlValue[][], actual: SqlValue[][]): boolean {
 // --- rowcount ---------------------------------------------------------------
 
 function compareRowCounts(expected: SqlResult, actual: SqlResult): Comparison {
-  const expectedN = Number(expected.rows[0]?.[0] ?? 0)
-  const actualN = Number(actual.rows[0]?.[0] ?? 0)
+  if (expected.effect?.kind !== 'changed' || actual.effect?.kind !== 'changed') {
+    return { ok: false, reason: 'Для проверки отправьте одну команду INSERT, UPDATE или DELETE.' }
+  }
+  const expectedN = expected.effect.rows
+  const actualN = actual.effect.rows
   return expectedN === actualN
     ? { ok: true }
     : { ok: false, reason: `затронуто строк: ожидалось ${expectedN}, получено ${actualN}` }

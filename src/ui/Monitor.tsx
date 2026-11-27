@@ -2,7 +2,17 @@ import { CheatSheet } from './CheatSheet.tsx'
 import { ResultTable } from './ResultTable.tsx'
 import { SchemaPanel } from './SchemaPanel.tsx'
 import { Terminal } from './Terminal.tsx'
+import type { SqlEffect } from '../core/sqlite.ts'
 import type { useCaseEngine } from './useCaseEngine.ts'
+
+function describeEffect(effect: SqlEffect): string {
+  switch (effect.kind) {
+    case 'changed': return `Затронуто строк: ${effect.rows}.`
+    case 'begin': return 'Транзакция открыта.'
+    case 'commit': return 'Изменения сохранены в учебной базе.'
+    case 'rollback': return 'Изменения в транзакции отменены.'
+  }
+}
 
 /** Правая колонка — машина: ввод запроса и результат, ничего третьего. */
 export function Monitor({ engine, learned }: { engine: ReturnType<typeof useCaseEngine>; learned: string[] }) {
@@ -28,7 +38,8 @@ export function Monitor({ engine, learned }: { engine: ReturnType<typeof useCase
         <button
           type="button"
           onClick={() => void resetDatabase()}
-          className="self-start rounded border border-folder/60 px-2 py-1 font-sans text-sm text-folder"
+          disabled={busy}
+          className="self-start rounded border border-folder/60 px-2 py-1 font-sans text-sm text-folder disabled:opacity-50"
         >
           Вернуть данные как были
         </button>
@@ -45,7 +56,16 @@ export function Monitor({ engine, learned }: { engine: ReturnType<typeof useCase
             : 'Запрос отработал, база ничего не нашла. Скорее всего, лишнее условие.'}
         </p>
       )}
-      {outcome?.kind === 'result' && <ResultTable result={outcome.result} />}
+      {outcome?.kind === 'result' && (
+        <>
+          {outcome.result.effect && (
+            <p role="status" className="rounded border border-glow/30 bg-screen p-3 font-mono text-sm text-glow">
+              {describeEffect(outcome.result.effect)}
+            </p>
+          )}
+          {outcome.result.rows.length > 0 && <ResultTable result={outcome.result} />}
+        </>
+      )}
     </div>
   )
 }

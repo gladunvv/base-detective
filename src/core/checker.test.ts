@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import initSqlJs, { type SqlJsStatic } from 'sql.js'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { checkAnswer, type FreshExecutor } from './checker.ts'
-import { execLast, execReadOnly, openDb, READ_ONLY_QUERY_ERROR } from './sqlite.ts'
+import { execReadOnly, execSql, openDb, READ_ONLY_QUERY_ERROR } from './sqlite.ts'
 import { parseCase } from './caseLoader.ts'
 import type { Case, Check, Step } from './types.ts'
 
@@ -21,8 +21,7 @@ function executorFor(schema: string, seed: string): FreshExecutor {
     Promise.resolve().then(() => {
       const db = openDb(SQL, schema, seed)
       try {
-        const execute = policy === 'read' ? execReadOnly : execLast
-        return { ok: true as const, result: execute(db, sql) }
+        return { ok: true as const, result: execSql(db, sql, policy) }
       } catch (error) {
         return { ok: false as const, error: (error as Error).message }
       } finally {
@@ -350,6 +349,19 @@ describe('require / forbid', () => {
 })
 
 describe('rowcount', () => {
+  it('требует эффект изменения даже при нулевом числе затронутых строк', async () => {
+    const step = makeStep({
+      solution: 'DELETE FROM suspects WHERE id = 99',
+      check: { mode: 'rowcount' },
+    })
+    const verdict = await checkAnswer({
+      step,
+      playerSql: 'SELECT 0',
+      runOnMain: executorFor(suspectsSchema, suspectsSeed),
+    })
+    expect(verdict.verdict).toBe('rejected')
+  })
+
   it.each([
     ['правильное изменение', "UPDATE suspects SET job = 'уволен' WHERE id = 2", 'accepted'],
     // Текущая проверка сравнивает только число строк. Проверка состояния запланирована в BD-14.

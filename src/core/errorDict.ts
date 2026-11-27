@@ -7,7 +7,7 @@
  * словарь — так и просит роадмапа. Формат у них проще (`match`/`say` —
  * обе строки, без групп захвата): их пишет автор дела в JSON, а не программист.
  */
-import { READ_ONLY_QUERY_ERROR } from './sqlite.ts'
+import { READ_ONLY_QUERY_ERROR, WRITE_QUERY_ERROR } from './sqlite.ts'
 import type { ErrorRule } from './types.ts'
 
 type DictRule = { match: RegExp; say: (m: RegExpMatchArray) => string }
@@ -41,6 +41,14 @@ const DICTIONARY: DictRule[] = [
     say: (m) => `Такое значение для «${m[1]}» уже есть — должно быть уникальным.`,
   },
   {
+    match: /cannot start a transaction within a transaction/i,
+    say: () => 'Транзакция уже открыта. Завершите её командой COMMIT или ROLLBACK.',
+  },
+  {
+    match: /cannot (commit|rollback) - no transaction is active/i,
+    say: () => 'Нет открытой транзакции. Начните её командой BEGIN.',
+  },
+  {
     match: /^near "(.+)": syntax error/i,
     say: (m) => `Ошибка в запросе рядом с «${m[1]}» — проверьте это место.`,
   },
@@ -57,6 +65,7 @@ export function translateError(rawMessage: string, stepRules: ErrorRule[] = []):
   if (rawMessage === READ_ONLY_QUERY_ERROR || rawMessage === 'attempt to write a readonly database') {
     return READ_ONLY_QUERY_ERROR
   }
+  if (rawMessage === WRITE_QUERY_ERROR) return WRITE_QUERY_ERROR
   for (const rule of stepRules) {
     if (new RegExp(rule.match, 'i').test(rawMessage)) return rule.say
   }

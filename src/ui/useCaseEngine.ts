@@ -100,7 +100,7 @@ export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
     if (!live.ok) {
       setOutcome({ kind: 'error', message: translateError(live.error, step.errors) })
       analytics.queryFailed(kase.id, step.id)
-    } else if (live.result.rows.length === 0) {
+    } else if (live.result.rows.length === 0 && !live.result.effect) {
       setOutcome({ kind: 'empty' })
     } else {
       setOutcome({ kind: 'result', result: live.result })
@@ -137,8 +137,11 @@ export function useCaseEngine(kase: Case, options: EngineOptions = {}) {
   }
 
   async function resetDatabase(): Promise<void> {
-    await runner.reset()
-    setOutcome(null)
+    if (busy) return
+    setBusy(true)
+    const reset = await runner.reset()
+    setOutcome(reset.ok ? null : { kind: 'error', message: translateError(reset.error, step?.errors) })
+    setBusy(false)
   }
 
   function finish(): void {

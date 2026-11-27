@@ -1,6 +1,6 @@
 import initSqlJs, { type Database } from 'sql.js'
 import wasmUrl from 'sql.js/dist/sql-wasm-browser.wasm?url'
-import { execLast, execReadOnly, openDb } from '../core/sqlite.ts'
+import { execSql, openDb } from '../core/sqlite.ts'
 import type { SqlResult, WorkerRequest, WorkerResponse } from '../core/sqlRunner.ts'
 
 const sqlJs = initSqlJs({ locateFile: () => wasmUrl })
@@ -11,13 +11,14 @@ async function handle(request: WorkerRequest): Promise<SqlResult> {
   const SQL = await sqlJs
 
   if (request.type === 'init') {
+    const next = openDb(SQL, request.schema, request.seed)
     db?.close()
-    db = openDb(SQL, request.schema, request.seed)
+    db = next
     return { columns: [], rows: [] }
   }
 
   if (!db) throw new Error('База не инициализирована')
-  return request.policy === 'write' ? execLast(db, request.sql) : execReadOnly(db, request.sql)
+  return execSql(db, request.sql, request.policy)
 }
 
 /**

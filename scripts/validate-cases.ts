@@ -8,7 +8,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js'
 import { parseCase } from '../src/core/caseLoader.ts'
-import { execLast, execReadOnly, openDb } from '../src/core/sqlite.ts'
+import { execSql, openDb } from '../src/core/sqlite.ts'
 import type { Case } from '../src/core/types.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -66,11 +66,13 @@ function checkSolutions(db: Database, kase: Case, label: 'seed' | 'shadow_seed')
   const problems: string[] = []
   for (const step of kase.steps) {
     try {
-      if (step.check.mode !== 'resultset') {
-        execLast(db, step.solution)
+      if (step.check.mode === 'rowcount') {
+        if (execSql(db, step.solution, 'write').effect?.kind !== 'changed') {
+          problems.push(`шаг ${step.id}: эталон для rowcount должен быть командой INSERT, UPDATE или DELETE`)
+        }
         continue
       }
-      const rows = execReadOnly(db, step.solution).rows.length
+      const rows = execSql(db, step.solution, 'read').rows.length
 
       const shouldBeEmpty = label === 'seed' && step.check.expect_empty
       if (shouldBeEmpty && rows > 0) {
